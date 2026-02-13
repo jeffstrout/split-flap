@@ -1,0 +1,18 @@
+# Node
+node_modules/
+dist/
+.env
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+
+# Claude Code (local settings are user-specific)
+.claude/settings.local.json
+
+# IDE
+.vscode/
+.idea/

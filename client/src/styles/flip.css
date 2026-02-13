@@ -1,0 +1,229 @@
+/* Main app container */
+.app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d0d0d;
+  overflow: hidden;
+}
+
+/* Flip board container */
+.flip-board {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flip-board-frame {
+  background: #0d0d0d;
+  padding: 2vh 2vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Row of characters */
+.flip-row {
+  display: flex;
+  gap: 0.3vw;
+  margin-bottom: 0.5vh;
+}
+
+.flip-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Individual character container */
+.flip-char-container {
+  perspective: 200px;
+}
+
+.flip-char {
+  position: relative;
+  width: calc((100vw - 4vw) / 24 - 0.4vw);
+  height: calc((100vh - 4vh) / 8 - 1vh);
+  font-family: 'Roboto Condensed', 'Arial Narrow', 'DejaVu Sans Condensed', sans-serif;
+  font-size: calc((100vh - 4vh) / 8 - 4vh);
+  font-weight: 700;
+  color: #f0f0f0;
+  background: #1a1a1a;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  letter-spacing: -0.05em;
+}
+
+/* Top half of character (static) */
+.flip-char-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  overflow: hidden;
+  background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+  border-bottom: 1px solid #0a0a0a;
+}
+
+.flip-char-top span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 200%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Bottom half of character (static) */
+.flip-char-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  overflow: hidden;
+  background: linear-gradient(180deg, #1a1a1a 0%, #151515 100%);
+}
+
+.flip-char-bottom span {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Flipping card overlay */
+.flip-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  transform-origin: bottom center;
+  transform-style: preserve-3d;
+  transition: transform 0.08s ease-in;
+  pointer-events: none;
+}
+
+.flip-card.flip {
+  transform: rotateX(-180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  overflow: hidden;
+  backface-visibility: hidden;
+  background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+}
+
+.flip-card-front span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 200%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flip-card-back {
+  transform: rotateX(180deg);
+  background: linear-gradient(180deg, #1a1a1a 0%, #151515 100%);
+}
+
+.flip-card-back span {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Subtle highlight effect */
+.flip-char::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  z-index: 10;
+}
+
+/* Center divider line */
+.flip-char::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #0a0a0a;
+  transform: translateY(-50%);
+  z-index: 5;
+}
+
+/* Light theme styles */
+.app.theme-light {
+  background: #f5f5f5;
+}
+
+.theme-light .flip-board-frame {
+  background: #f5f5f5;
+}
+
+.theme-light .flip-char {
+  color: #1a1a1a;
+  background: #e8e8e8;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.theme-light .flip-char-top {
+  background: linear-gradient(180deg, #ffffff 0%, #e8e8e8 100%);
+  border-bottom: 1px solid #d0d0d0;
+}
+
+.theme-light .flip-char-bottom {
+  background: linear-gradient(180deg, #e8e8e8 0%, #d8d8d8 100%);
+}
+
+.theme-light .flip-card-front {
+  background: linear-gradient(180deg, #ffffff 0%, #e8e8e8 100%);
+}
+
+.theme-light .flip-card-back {
+  background: linear-gradient(180deg, #e8e8e8 0%, #d8d8d8 100%);
+}
+
+.theme-light .flip-char::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+}
+
+.theme-light .flip-char::after {
+  background: #d0d0d0;
+}
+
