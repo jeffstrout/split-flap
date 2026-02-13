@@ -164,3 +164,51 @@ chrome.exe --kiosk http://localhost:3000
 - `server/src/index.js` - Express server, WebSocket setup, CORS config
 - `.do/app.yaml` - DigitalOcean App Platform deployment spec
 - `start.sh` / `stop.sh` / `status.sh` - Local development scripts
+
+## Claude Code
+
+### Slash Commands
+
+| Command | Description |
+|---------|-------------|
+| `/deploy` | Deploy main branch to DigitalOcean with pre-flight checks |
+| `/onboard` | Deep exploration of a task before implementation |
+| `/ticket` | End-to-end GitHub Issue workflow (read → branch → implement → PR) |
+| `/pr-review` | Review a PR against project standards |
+
+### Agents
+
+| Agent | Model | Description |
+|-------|-------|-------------|
+| `code-reviewer` | opus | Review checklist for Node/Express, React, CSS, WebSocket |
+| `github-workflow` | sonnet | Branch naming, commit format, PR conventions |
+
+### Branch Protection
+
+Edits on `main` are blocked by a PreToolUse hook. Always work on a feature branch.
+
+## TODO
+
+### Infrastructure (before first deploy)
+- [ ] Create DigitalOcean app: `doctl apps create --spec .do/app.yaml`
+- [ ] Record the app ID in `.do/app.yaml` and `/deploy` command
+- [ ] Record the production URL in `/deploy` command health check
+- [ ] Verify WebSocket works through DO App Platform routing (`wss://<host>/api`)
+- [ ] Test full deploy cycle: push to main → `/deploy` → verify in browser
+
+### Code Quality
+- [ ] Add input validation for message lines (check array element types, length limits)
+- [ ] Add exponential backoff to WebSocket reconnect (currently retries every 3s forever)
+- [ ] Extract shared ROWS/COLS constants to avoid duplication across 4 files
+- [ ] Add `React.memo` to FlipChar to prevent unnecessary re-renders
+
+### Features
+- [ ] Add UI controls for sound/theme toggle (currently API-only)
+- [ ] Add a health/status endpoint (`GET /api/health`) for deployment monitoring
+- [ ] Consider message persistence (optional — currently in-memory only)
+
+### DevOps
+- [ ] Set up GitHub Actions for automated PR review (like EFM's `pr-claude-code-review.yml`)
+- [ ] Add GitHub Issue templates (bug report, feature request)
+- [ ] Add GitHub labels (`bug`, `feature`, `ai-ready`, `needs-clarification`)
+- [ ] Test `start.sh` / `stop.sh` / `status.sh` on a clean machine
