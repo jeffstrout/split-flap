@@ -7,6 +7,7 @@ A retro split-flap display web application with real-time updates via WebSocket.
 - **Client**: React + Vite (port 3000)
 - **Server**: Node.js + Express + WebSocket (port 3001)
 - **Deployment**: DigitalOcean App Platform
+- **Font**: Google Fonts — Roboto Condensed 700 (loaded in `client/index.html`)
 
 ## Running the Application
 
@@ -135,15 +136,65 @@ Theme is **dark by default**.
 
 Lines are automatically uppercased and centered. Max 24 characters per line, 8 rows.
 
+## WebSocket Protocol
+
+The server pushes state to all connected clients via WebSocket. Two message types:
+
+### `message` — Board content
+
+```json
+{
+  "type": "message",
+  "data": {
+    "lines": [
+      "        HELLO WORLD     ",
+      "                        ",
+      "                        ",
+      "                        ",
+      "                        ",
+      "                        ",
+      "                        ",
+      "                        "
+    ]
+  }
+}
+```
+
+Each line is exactly 24 characters, padded with spaces. Always 8 lines.
+
+### `settings` — Sound and theme
+
+```json
+{
+  "type": "settings",
+  "data": {
+    "soundEnabled": true,
+    "theme": "dark"
+  }
+}
+```
+
+Sent on connect and whenever sound or theme changes.
+
 ## Configuration
 
-Board dimensions are defined in three places (keep in sync):
+Board dimensions are defined in four places (keep in sync):
 - `client/src/App.jsx` - ROWS, COLS constants
 - `server/src/routes/messages.js` - ROWS, COLS constants
 - `server/src/index.js` - initial state padEnd value
-- `client/src/styles/flip.css` - width calc divisor
+- `client/src/styles/flip.css` - width calc divisor (`24` in the width calculation)
 
 Current: 24 columns x 8 rows
+
+### Supported Characters
+
+The flip animation cycles through this character set in order:
+
+```
+ ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-:'"/()@#$%&*+
+```
+
+(Space, then A-Z, 0-9, and punctuation.) Unsupported characters are displayed as spaces.
 
 ## Kiosk Mode
 
@@ -157,12 +208,28 @@ chrome.exe --kiosk http://localhost:3000
 
 ## Key Files
 
-- `client/src/components/FlipChar.jsx` - Individual character flip animation
+### Client
+
+- `client/index.html` - HTML shell, Google Fonts (Roboto Condensed 700)
+- `client/vite.config.js` - Vite config with dev proxy (`/api` → localhost:3001)
+- `client/src/main.jsx` - React entry point
+- `client/src/App.jsx` - Root component, WebSocket state management
 - `client/src/components/FlipBoard.jsx` - Board container + audio synthesis
-- `client/src/styles/flip.css` - Styling, dimensions, and theme support
+- `client/src/components/FlipRow.jsx` - Row of characters, maps text to FlipChar
+- `client/src/components/FlipChar.jsx` - Individual character flip animation
+- `client/src/hooks/useWebSocket.js` - Auto-reconnecting WebSocket hook
+- `client/src/styles/flip.css` - Styling, dimensions, animations, theme support
+
+### Server
+
+- `server/src/index.js` - Express server, WebSocket setup, CORS config, state
 - `server/src/routes/messages.js` - API endpoints, clock logic, sound/theme control
-- `server/src/index.js` - Express server, WebSocket setup, CORS config
+
+### Config & DevOps
+
 - `.do/app.yaml` - DigitalOcean App Platform deployment spec
+- `.gitignore` - Git ignore rules (node_modules, dist, logs, .env, IDE files)
+- `.mcp.json` - GitHub MCP server config for Claude Code
 - `start.sh` / `stop.sh` / `status.sh` - Local development scripts
 
 ## Claude Code
@@ -182,6 +249,20 @@ chrome.exe --kiosk http://localhost:3000
 |-------|-------|-------------|
 | `code-reviewer` | opus | Review checklist for Node/Express, React, CSS, WebSocket |
 | `github-workflow` | sonnet | Branch naming, commit format, PR conventions |
+
+### Skills
+
+| Skill | Description |
+|-------|-------------|
+| `express-websocket-server` | Server route patterns, WebSocket broadcasting, state management |
+| `react-flipboard-client` | Component hierarchy, flip animation, audio synthesis, theming |
+
+### GitHub Integration
+
+- **PR review workflow**: `.github/workflows/pr-claude-code-review.yml` — auto-reviews PRs using Claude (requires `ANTHROPIC_API_KEY` repo secret)
+- **Issue template**: `.github/ISSUE_TEMPLATE/ai-task.yml` — structured template for AI tasks
+- **Labels**: `ai-ready`, `ai-in-progress`, `ai-review`, `ai-failed`, `needs-clarification`
+- **Briefing doc**: `.claude/docs/autonomous-workflow-briefing.md`
 
 ### Branch Protection
 
@@ -208,7 +289,8 @@ Edits on `main` are blocked by a PreToolUse hook. Always work on a feature branc
 - [ ] Consider message persistence (optional — currently in-memory only)
 
 ### DevOps
-- [ ] Set up GitHub Actions for automated PR review (like EFM's `pr-claude-code-review.yml`)
-- [ ] Add GitHub Issue templates (bug report, feature request)
-- [ ] Add GitHub labels (`bug`, `feature`, `ai-ready`, `needs-clarification`)
+- [x] Set up GitHub Actions for automated PR review (`pr-claude-code-review.yml`)
+- [x] Add GitHub Issue templates (`ai-task.yml`)
+- [x] Add GitHub labels (`ai-ready`, `ai-in-progress`, `ai-review`, `ai-failed`, `needs-clarification`)
+- [ ] Add `ANTHROPIC_API_KEY` as GitHub repo secret (required for PR review workflow)
 - [ ] Test `start.sh` / `stop.sh` / `status.sh` on a clean machine
