@@ -24,6 +24,18 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [[ \"$CLAUDE_TOOL_INPUT_FILE_PATH\" =~ \\.(jsx|js)$ ]] && [[ \"$CLAUDE_TOOL_INPUT_FILE_PATH\" =~ client/ ]]; then\n  cd \"$CLAUDE_PROJECT_DIR/client\" && npx vite build --mode development 2>&1 | tail -5\n  exit 0\nfi",
+            "timeout": 30
+          }
+        ]
+      }
     ]
   }
 }

@@ -1,0 +1,52 @@
+name: AI Development Task
+description: Task for autonomous Claude Code execution
+labels: ["ai-ready"]
+body:
+  - type: textarea
+    id: task
+    attributes:
+      label: Task Description
+      description: What needs to be built or fixed. Be specific.
+      placeholder: "Add a new API endpoint for..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Testable conditions that define "done"
+      placeholder: |
+        - [ ] API endpoint returns correct data
+        - [ ] WebSocket broadcasts the update
+        - [ ] Client builds without errors
+    validations:
+      required: true
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Affected Area
+      options:
+        - Client only
+        - Server only
+        - Full stack (client + server)
+        - Config/DevOps only
+    validations:
+      required: true
+
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints & Context
+      description: Directories to limit changes to, related files, things NOT to touch
+      placeholder: "Only modify files in server/src/routes/. Do not change the animation timing."
+
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Estimated Complexity
+      options:
+        - Small (single file, < 100 lines)
+        - Medium (2-5 files, < 500 lines)
+        - Large (needs human pairing)
