@@ -57,3 +57,13 @@ VITE_BURN_IN_SHIFT=true npm run build
 
 The matrix then drifts a few pixels on a 5-minute cycle. The dark theme is also
 gentler on such panels.
+
+## Persistence (optional)
+By default state is in-memory and resets on restart. To persist the last
+message and the sound/theme/mode settings across restarts, set a writable path:
+
+```bash
+PERSIST_FILE=/var/lib/split-flap/state.json npm start
+```
+
+State is saved on a short interval and on shutdown, and restored on boot.
