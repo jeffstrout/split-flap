@@ -15,7 +15,8 @@ function broadcastSettings() {
     data: {
       soundEnabled: state.soundEnabled,
       theme: state.theme,
-      mode: state.mode
+      mode: state.mode,
+      qlockLanguage: state.qlockLanguage
     }
   });
 }
@@ -219,6 +220,22 @@ router.post('/mode/qlock', (req, res) => {
   state.mode = 'qlock';
   broadcastSettings();
   res.json({ success: true, mode: 'qlock' });
+});
+
+// GET /api/qlock/language - Get the QLOCKTWO word-clock language
+router.get('/qlock/language', (req, res) => {
+  res.json({ qlockLanguage: state.qlockLanguage });
+});
+
+// POST /api/qlock/language/en|ar - Set the QLOCKTWO language
+router.post('/qlock/language/:lang', (req, res) => {
+  const { lang } = req.params;
+  if (lang !== 'en' && lang !== 'ar') {
+    return res.status(400).json({ error: "language must be 'en' or 'ar'" });
+  }
+  state.qlockLanguage = lang;
+  broadcastSettings();
+  res.json({ success: true, qlockLanguage: lang });
 });
 
 // GET /api/health - Liveness/readiness probe for deployment monitoring

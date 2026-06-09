@@ -1,6 +1,6 @@
 # Split-Flap Display — Requirements Document
 
-**Status:** Draft · **Version:** 0.2 · **Last updated:** 2026-06-09
+**Status:** Draft · **Version:** 0.3 · **Last updated:** 2026-06-09
 
 A retro split-flap (Solari board) web application that renders text on a grid of
 animated character tiles and updates all connected displays in real time over
@@ -16,6 +16,8 @@ Requirement IDs are stable references for issues, PRs, and commits:
 tag marks requirements that are not yet implemented.
 
 ### Changelog
+- **0.3** — QLOCKTWO is now multilingual: added an Arabic (MSA) word
+  clock with RTL rendering and a server-owned language setting (FR-38).
 - **0.2** — Added two display modes (split-flap + QLOCKTWO word clock, §6–§7)
   and wall-mounted monitor / kiosk requirements (§8). Mode is server-owned and
   switched via the API; the word clock reads each display's local time and runs
@@ -289,6 +291,16 @@ server-driven variant; out of scope for v1 — see §13, §14.)
 - QLOCKTWO mode is **silent** — the flip tick (FR-11) does not play in this mode.
 - Word changes may use a subtle fade transition (cosmetic; not required for v1).
 
+### FR-38 Word-clock language (English / Arabic)
+The QLOCKTWO language is server-owned global state (`en` | `ar`), broadcast in
+`settings` alongside `mode`/`theme`. Each language is a pack (letter matrix +
+phrasing rules); the client renders the active pack and applies `dir`/font.
+- `GET /api/qlock/language` → `{ qlockLanguage }`
+- `POST /api/qlock/language/en` · `POST /api/qlock/language/ar`
+- Boot default via `DEFAULT_QLOCK_LANG` env (default `en`).
+- **Arabic** uses Modern Standard Arabic, fraction-based phrasing
+  (ربع/ثلث/نصف with و/إلا) and right-to-left rendering.
+
 ---
 
 ## 8. Functional Requirements — Wall-Mounted Monitor / Kiosk *(Planned)*
@@ -335,6 +347,7 @@ Deploy to **DigitalOcean App Platform** using `.do/app.yaml`:
 | `PORT` | Server | HTTP/WS port | `3001` |
 | `ALLOWED_ORIGINS` | Server | Comma-separated CORS allow-list | `localhost:3000,3001`; in prod set to the app's public URL |
 | `DEFAULT_MODE` | Server | Boot mode (`flip` \| `qlock`) | `qlock` *(Planned, FR-25)* |
+| `DEFAULT_QLOCK_LANG` | Server | Boot word-clock language (`en` \| `ar`) | `en` *(FR-38)* |
 
 ### DR-4 CORS
 The server restricts cross-origin requests to `ALLOWED_ORIGINS` (with
@@ -437,6 +450,8 @@ split-flap clock's centering), or expose an explicit `align` option.
 | POST | `/api/theme/dark` \| `/light` | FR-12 | Set theme |
 | GET | `/api/mode` | FR-24 *(Planned)* | Get current mode |
 | POST | `/api/mode/flip` \| `/qlock` | FR-24 *(Planned)* | Switch display mode |
+| GET | `/api/qlock/language` | FR-38 | Get word-clock language |
+| POST | `/api/qlock/language/en` \| `/ar` | FR-38 | Set word-clock language |
 | GET | `/api/health` | FR-21 *(Planned)* | Liveness/readiness |
 
 **Message format**
@@ -457,7 +472,7 @@ Lines are uppercased and truncated/padded to 24 chars; up to 8 rows.
 - Multi-timezone or sub-second-synchronized word clocks (QLOCKTWO uses each
   display's local clock — FR-33).
 - On-screen / scheduled / automatic mode switching (API-only in v1 — FR-25).
-- Additional QLOCKTWO languages (English only in v1).
+- Additional QLOCKTWO languages beyond English and Arabic (FR-38).
 - Rich content (images, per-tile color, fonts beyond the configured one),
   historical message log, or message scheduling/queueing.
 

@@ -13,6 +13,7 @@ function App() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [theme, setTheme] = useState('dark');
   const [mode, setMode] = useState('qlock');
+  const [qlockLanguage, setQlockLanguage] = useState('en');
 
   // Keep the wall monitor awake (FR-37).
   useWakeLock();
@@ -37,13 +38,16 @@ function App() {
       if (lastMessage.data.mode) {
         setMode(lastMessage.data.mode);
       }
+      if (lastMessage.data.qlockLanguage) {
+        setQlockLanguage(lastMessage.data.qlockLanguage);
+      }
     }
   }, [lastMessage]);
 
   return (
     <div className={`app ${theme === 'light' ? 'theme-light' : 'theme-dark'}`}>
       {mode === 'qlock' ? (
-        <QlockTwo theme={theme} />
+        <QlockTwo theme={theme} language={qlockLanguage} />
       ) : (
         <FlipBoard
           lines={lines}
