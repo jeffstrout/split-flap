@@ -1,5 +1,4 @@
-/* QLOCKTWO word clock — placeholder styles (issue #8).
-   Full matrix styling lands in issue #10. */
+/* QLOCKTWO word clock (FR-27, FR-30, FR-34). */
 .qlock {
   display: flex;
   align-items: center;
@@ -7,18 +6,70 @@
   width: 100%;
   height: 100vh;
   background: #000;
-  color: #fff;
+  --qlock-lit: #ffffff;
+  --qlock-dim: #2a2a2a;
+  --qlock-dot: #ffffff;
 }
 
 .qlock.theme-light {
-  background: #fff;
-  color: #000;
+  background: #ffffff;
+  --qlock-lit: #000000;
+  --qlock-dim: #d2d2d2;
+  --qlock-dot: #000000;
 }
 
-.qlock-placeholder {
+/* Square matrix that scales to fit the viewport, with room for corner dots. */
+.qlock-matrix {
+  position: relative;
+  box-sizing: border-box;
+  width: min(88vw, 88vh);
+  height: min(88vw, 88vh);
+  padding: min(2.2vw, 2.2vh);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.qlock-row {
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.qlock-cell {
+  flex: 1;
+  text-align: center;
   font-family: 'Roboto Condensed', sans-serif;
   font-weight: 700;
-  letter-spacing: 0.3em;
-  font-size: 6vw;
-  opacity: 0.85;
+  font-size: min(5.5vw, 5.5vh);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--qlock-dim);
+  transition: color 0.6s ease, opacity 0.6s ease;
+  user-select: none;
 }
+
+.qlock-cell.lit {
+  color: var(--qlock-lit);
+}
+
+/* Corner dots */
+.qlock-dot {
+  position: absolute;
+  width: min(1.2vw, 1.2vh);
+  height: min(1.2vw, 1.2vh);
+  border-radius: 50%;
+  background: var(--qlock-dot);
+  opacity: 0.12;
+  transition: opacity 0.6s ease;
+}
+
+.qlock-dot.lit {
+  opacity: 1;
+}
+
+.qlock-dot.tl { top: min(0.8vw, 0.8vh); left: min(0.8vw, 0.8vh); }
+.qlock-dot.tr { top: min(0.8vw, 0.8vh); right: min(0.8vw, 0.8vh); }
+.qlock-dot.br { bottom: min(0.8vw, 0.8vh); right: min(0.8vw, 0.8vh); }
+.qlock-dot.bl { bottom: min(0.8vw, 0.8vh); left: min(0.8vw, 0.8vh); }
