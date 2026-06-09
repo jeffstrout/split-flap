@@ -3,9 +3,7 @@ import FlipBoard from './components/FlipBoard';
 import QlockTwo from './components/QlockTwo';
 import useWebSocket from './hooks/useWebSocket';
 import useWakeLock from './hooks/useWakeLock';
-
-const ROWS = 8;
-const COLS = 24;
+import { ROWS, COLS } from '@board';
 
 function App() {
   const [lines, setLines] = useState(

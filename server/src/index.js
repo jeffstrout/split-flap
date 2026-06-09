@@ -3,6 +3,7 @@ import cors from 'cors';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import messagesRouter from './routes/messages.js';
+import { ROWS, COLS } from './config.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -34,7 +35,7 @@ app.use(express.json());
 // Store for current message and connected clients
 export const state = {
   currentMessage: {
-    lines: Array(8).fill(''.padEnd(24, ' '))
+    lines: Array(ROWS).fill(''.padEnd(COLS, ' '))
   },
   clients: new Set(),
   clockInterval: null,
