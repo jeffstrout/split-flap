@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import FlipBoard from './components/FlipBoard';
 import QlockTwo from './components/QlockTwo';
 import useWebSocket from './hooks/useWebSocket';
+import useWakeLock from './hooks/useWakeLock';
 
 const ROWS = 8;
 const COLS = 24;
@@ -13,6 +14,9 @@ function App() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [theme, setTheme] = useState('dark');
   const [mode, setMode] = useState('qlock');
+
+  // Keep the wall monitor awake (FR-37).
+  useWakeLock();
 
   const wsUrl = import.meta.env.DEV
     ? 'ws://localhost:3001'
