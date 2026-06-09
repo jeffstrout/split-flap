@@ -2,6 +2,10 @@ import { Router } from 'express';
 import { state, broadcast } from '../index.js';
 import { ROWS, COLS } from '../config.js';
 
+// Reject absurdly long lines outright (they are truncated to COLS for display,
+// but this caps payload abuse).
+const MAX_LINE_LENGTH = 256;
+
 const router = Router();
 
 // Helper to broadcast the current settings (sound, theme, mode) to all clients
@@ -35,8 +39,17 @@ router.get('/message', (req, res) => {
 router.post('/message', (req, res) => {
   const { lines } = req.body;
 
-  if (!lines || !Array.isArray(lines)) {
-    return res.status(400).json({ error: 'lines array is required' });
+  if (!Array.isArray(lines)) {
+    return res.status(400).json({ error: 'lines must be an array' });
+  }
+  if (lines.length > ROWS) {
+    return res.status(400).json({ error: `lines may contain at most ${ROWS} entries` });
+  }
+  if (!lines.every((line) => typeof line === 'string')) {
+    return res.status(400).json({ error: 'each line must be a string' });
+  }
+  if (lines.some((line) => line.length > MAX_LINE_LENGTH)) {
+    return res.status(400).json({ error: `each line must be at most ${MAX_LINE_LENGTH} characters` });
   }
 
   state.currentMessage = {
