@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import FlipBoard from './components/FlipBoard';
 import QlockTwo from './components/QlockTwo';
+import Controls from './components/Controls';
 import useWebSocket from './hooks/useWebSocket';
 import useWakeLock from './hooks/useWakeLock';
 import { ROWS, COLS } from '@board';
@@ -52,6 +53,7 @@ function App() {
           theme={theme}
         />
       )}
+      <Controls soundEnabled={soundEnabled} theme={theme} />
     </div>
   );
 }
