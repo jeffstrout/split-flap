@@ -46,3 +46,14 @@ Mode is API-controlled (all displays switch together):
 curl -X POST http://<host>:3000/api/mode/qlock   # word clock
 curl -X POST http://<host>:3000/api/mode/flip    # split-flap board
 ```
+
+## Burn-in mitigation (OLED/plasma only)
+The QLOCKTWO clock is static for a full minute. On burn-in-prone panels,
+enable a slow pixel-shift at build time (off by default; not needed for LCD):
+
+```bash
+VITE_BURN_IN_SHIFT=true npm run build
+```
+
+The matrix then drifts a few pixels on a 5-minute cycle. The dark theme is also
+gentler on such panels.
