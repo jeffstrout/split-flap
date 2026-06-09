@@ -4,6 +4,7 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import messagesRouter from './routes/messages.js';
 import { ROWS, COLS } from './config.js';
+import { loadPersisted, startPersistence } from './persistence.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -44,6 +45,16 @@ export const state = {
   theme: 'dark', // 'dark' = black bg/white text, 'light' = white bg/black text
   mode: DEFAULT_MODE // 'flip' = split-flap board, 'qlock' = QLOCKTWO word clock
 };
+
+// Restore persisted state (NFR-8) — overrides defaults when enabled.
+const persisted = loadPersisted();
+if (persisted) {
+  if (persisted.currentMessage?.lines) state.currentMessage = persisted.currentMessage;
+  if (VALID_MODES.includes(persisted.mode)) state.mode = persisted.mode;
+  if (['dark', 'light'].includes(persisted.theme)) state.theme = persisted.theme;
+  if (typeof persisted.soundEnabled === 'boolean') state.soundEnabled = persisted.soundEnabled;
+}
+startPersistence(state);
 
 // Routes
 app.use('/api', messagesRouter);
