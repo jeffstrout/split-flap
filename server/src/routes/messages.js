@@ -6,6 +6,18 @@ const router = Router();
 const ROWS = 8;
 const COLS = 24;
 
+// Helper to broadcast the current settings (sound, theme, mode) to all clients
+function broadcastSettings() {
+  broadcast({
+    type: 'settings',
+    data: {
+      soundEnabled: state.soundEnabled,
+      theme: state.theme,
+      mode: state.mode
+    }
+  });
+}
+
 // Helper to pad/truncate lines to fit board dimensions
 function formatMessage(lines) {
   const formatted = [];
@@ -133,20 +145,14 @@ router.post('/clock/stop', (req, res) => {
 // POST /api/sound/on - Enable sound
 router.post('/sound/on', (req, res) => {
   state.soundEnabled = true;
-  broadcast({
-    type: 'settings',
-    data: { soundEnabled: state.soundEnabled, theme: state.theme }
-  });
+  broadcastSettings();
   res.json({ success: true, soundEnabled: true });
 });
 
 // POST /api/sound/off - Disable sound
 router.post('/sound/off', (req, res) => {
   state.soundEnabled = false;
-  broadcast({
-    type: 'settings',
-    data: { soundEnabled: state.soundEnabled, theme: state.theme }
-  });
+  broadcastSettings();
   res.json({ success: true, soundEnabled: false });
 });
 
@@ -158,26 +164,39 @@ router.get('/sound', (req, res) => {
 // POST /api/theme/dark - Set dark theme (black bg, white text)
 router.post('/theme/dark', (req, res) => {
   state.theme = 'dark';
-  broadcast({
-    type: 'settings',
-    data: { soundEnabled: state.soundEnabled, theme: state.theme }
-  });
+  broadcastSettings();
   res.json({ success: true, theme: 'dark' });
 });
 
 // POST /api/theme/light - Set light theme (white bg, black text)
 router.post('/theme/light', (req, res) => {
   state.theme = 'light';
-  broadcast({
-    type: 'settings',
-    data: { soundEnabled: state.soundEnabled, theme: state.theme }
-  });
+  broadcastSettings();
   res.json({ success: true, theme: 'light' });
 });
 
 // GET /api/theme - Get current theme
 router.get('/theme', (req, res) => {
   res.json({ theme: state.theme });
+});
+
+// GET /api/mode - Get current display mode
+router.get('/mode', (req, res) => {
+  res.json({ mode: state.mode });
+});
+
+// POST /api/mode/flip - Switch all displays to the split-flap board
+router.post('/mode/flip', (req, res) => {
+  state.mode = 'flip';
+  broadcastSettings();
+  res.json({ success: true, mode: 'flip' });
+});
+
+// POST /api/mode/qlock - Switch all displays to the QLOCKTWO word clock
+router.post('/mode/qlock', (req, res) => {
+  state.mode = 'qlock';
+  broadcastSettings();
+  res.json({ success: true, mode: 'qlock' });
 });
 
 // Helper function to generate time message
