@@ -73,3 +73,8 @@
 .qlock-dot.tr { top: min(0.8vw, 0.8vh); right: min(0.8vw, 0.8vh); }
 .qlock-dot.br { bottom: min(0.8vw, 0.8vh); right: min(0.8vw, 0.8vh); }
 .qlock-dot.bl { bottom: min(0.8vw, 0.8vh); left: min(0.8vw, 0.8vh); }
+
+/* Burn-in pixel-shift glide (NFR-9) */
+.qlock-matrix {
+  transition: transform 2s ease;
+}
