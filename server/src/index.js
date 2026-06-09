@@ -7,6 +7,13 @@ import messagesRouter from './routes/messages.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Default display mode on boot (FR-25). Falls back to 'qlock' for any
+// unrecognized value so the wall display rests on the word clock.
+const VALID_MODES = ['flip', 'qlock'];
+const DEFAULT_MODE = VALID_MODES.includes(process.env.DEFAULT_MODE)
+  ? process.env.DEFAULT_MODE
+  : 'qlock';
+
 // CORS configuration
 const defaultOrigins = [
   'http://localhost:3000',
@@ -33,7 +40,8 @@ export const state = {
   clockInterval: null,
   clockTimeout: null,
   soundEnabled: true,
-  theme: 'dark' // 'dark' = black bg/white text, 'light' = white bg/black text
+  theme: 'dark', // 'dark' = black bg/white text, 'light' = white bg/black text
+  mode: DEFAULT_MODE // 'flip' = split-flap board, 'qlock' = QLOCKTWO word clock
 };
 
 // Routes
@@ -58,7 +66,8 @@ wss.on('connection', (ws) => {
     type: 'settings',
     data: {
       soundEnabled: state.soundEnabled,
-      theme: state.theme
+      theme: state.theme,
+      mode: state.mode
     }
   }));
 
@@ -86,4 +95,5 @@ export function broadcast(data) {
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`WebSocket available on ws://localhost:${PORT}`);
+  console.log(`Default mode: ${state.mode}`);
 });
