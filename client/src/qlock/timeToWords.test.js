@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { timeToWords, timeToPhrase } from './timeToWords.js';
 import { GRID, WORDS, WORD_TEXT } from './matrix.js';
+import { en } from './lang/en.js';
 
 const at = (h, m) => new Date(2026, 0, 1, h, m, 0);
 
@@ -65,9 +66,9 @@ test('ten to / five to / twenty to', () => {
   assert.equal(timeToPhrase(at(7, 40)), 'IT IS TWENTY TO EIGHT');
 });
 
-test('showItIs:false drops the prefix', () => {
-  assert.equal(timeToPhrase(at(10, 30), { showItIs: false }), 'HALF PAST TEN');
-  assert.ok(!timeToWords(at(10, 30), { showItIs: false }).litKeys.has('0-0'));
+test('showPrefix:false drops the prefix', () => {
+  assert.equal(timeToPhrase(at(10, 30), en, { showPrefix: false }), 'HALF PAST TEN');
+  assert.ok(!timeToWords(at(10, 30), en, { showPrefix: false }).litKeys.has('0-0'));
 });
 
 test('litKeys are valid grid coordinates', () => {

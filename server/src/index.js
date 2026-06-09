@@ -16,6 +16,12 @@ const DEFAULT_MODE = VALID_MODES.includes(process.env.DEFAULT_MODE)
   ? process.env.DEFAULT_MODE
   : 'qlock';
 
+// Default QLOCKTWO language on boot (issue #33).
+const VALID_LANGS = ['en', 'ar'];
+const DEFAULT_QLOCK_LANG = VALID_LANGS.includes(process.env.DEFAULT_QLOCK_LANG)
+  ? process.env.DEFAULT_QLOCK_LANG
+  : 'en';
+
 // CORS configuration
 const defaultOrigins = [
   'http://localhost:3000',
@@ -43,7 +49,8 @@ export const state = {
   clockTimeout: null,
   soundEnabled: true,
   theme: 'dark', // 'dark' = black bg/white text, 'light' = white bg/black text
-  mode: DEFAULT_MODE // 'flip' = split-flap board, 'qlock' = QLOCKTWO word clock
+  mode: DEFAULT_MODE, // 'flip' = split-flap board, 'qlock' = QLOCKTWO word clock
+  qlockLanguage: DEFAULT_QLOCK_LANG // 'en' | 'ar' — QLOCKTWO word-clock language
 };
 
 // Restore persisted state (NFR-8) — overrides defaults when enabled.
@@ -53,6 +60,7 @@ if (persisted) {
   if (VALID_MODES.includes(persisted.mode)) state.mode = persisted.mode;
   if (['dark', 'light'].includes(persisted.theme)) state.theme = persisted.theme;
   if (typeof persisted.soundEnabled === 'boolean') state.soundEnabled = persisted.soundEnabled;
+  if (VALID_LANGS.includes(persisted.qlockLanguage)) state.qlockLanguage = persisted.qlockLanguage;
 }
 startPersistence(state);
 
@@ -79,7 +87,8 @@ wss.on('connection', (ws) => {
     data: {
       soundEnabled: state.soundEnabled,
       theme: state.theme,
-      mode: state.mode
+      mode: state.mode,
+      qlockLanguage: state.qlockLanguage
     }
   }));
 

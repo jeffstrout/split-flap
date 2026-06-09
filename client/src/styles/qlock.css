@@ -40,9 +40,9 @@
 .qlock-cell {
   flex: 1;
   text-align: center;
-  font-family: 'Roboto Condensed', sans-serif;
+  font-family: inherit;
   font-weight: 700;
-  font-size: min(5.5vw, 5.5vh);
+  font-size: calc(min(88vw, 88vh) / var(--qlock-cols, 11) * 0.62);
   line-height: 1;
   letter-spacing: 0.02em;
   color: var(--qlock-dim);

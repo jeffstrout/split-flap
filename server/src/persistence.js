@@ -30,6 +30,7 @@ export function startPersistence(state) {
           mode: state.mode,
           theme: state.theme,
           soundEnabled: state.soundEnabled,
+          qlockLanguage: state.qlockLanguage,
         })
       );
     } catch (e) {
