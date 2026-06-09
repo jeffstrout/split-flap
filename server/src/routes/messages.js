@@ -210,6 +210,16 @@ router.post('/mode/qlock', (req, res) => {
   res.json({ success: true, mode: 'qlock' });
 });
 
+// GET /api/health - Liveness/readiness probe for deployment monitoring
+router.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    connectedClients: state.clients.size,
+    mode: state.mode
+  });
+});
+
 // Helper function to generate time message
 function generateTimeMessage() {
   const now = new Date();
