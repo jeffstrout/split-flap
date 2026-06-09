@@ -44,10 +44,10 @@
 
 .flip-char {
   position: relative;
-  width: calc((100vw - 4vw) / 24 - 0.4vw);
-  height: calc((100vh - 4vh) / 8 - 1vh);
+  width: calc((100vw - 4vw) / var(--board-cols) - 0.4vw);
+  height: calc((100vh - 4vh) / var(--board-rows) - 1vh);
   font-family: 'Roboto Condensed', 'Arial Narrow', 'DejaVu Sans Condensed', sans-serif;
-  font-size: calc((100vh - 4vh) / 8 - 4vh);
+  font-size: calc((100vh - 4vh) / var(--board-rows) - 4vh);
   font-weight: 700;
   color: #f0f0f0;
   background: #1a1a1a;

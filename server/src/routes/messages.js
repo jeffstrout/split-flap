@@ -1,10 +1,8 @@
 import { Router } from 'express';
 import { state, broadcast } from '../index.js';
+import { ROWS, COLS } from '../config.js';
 
 const router = Router();
-
-const ROWS = 8;
-const COLS = 24;
 
 // Helper to broadcast the current settings (sound, theme, mode) to all clients
 function broadcastSettings() {
