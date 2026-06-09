@@ -20,12 +20,18 @@ function broadcastSettings() {
   });
 }
 
-// Helper to pad/truncate lines to fit board dimensions
-function formatMessage(lines) {
+// Helper to pad/truncate lines to fit board dimensions.
+// align: 'left' (default) right-pads; 'center' centers within COLS.
+function formatMessage(lines, align = 'left') {
   const formatted = [];
   for (let i = 0; i < ROWS; i++) {
-    const line = lines[i] || '';
-    formatted.push(line.toUpperCase().substring(0, COLS).padEnd(COLS, ' '));
+    const raw = (lines[i] || '').toUpperCase().substring(0, COLS);
+    if (align === 'center') {
+      const leftPad = Math.floor((COLS - raw.length) / 2);
+      formatted.push((' '.repeat(leftPad) + raw).padEnd(COLS, ' '));
+    } else {
+      formatted.push(raw.padEnd(COLS, ' '));
+    }
   }
   return formatted;
 }
@@ -52,8 +58,13 @@ router.post('/message', (req, res) => {
     return res.status(400).json({ error: `each line must be at most ${MAX_LINE_LENGTH} characters` });
   }
 
+  const align = req.body.align ?? 'left';
+  if (align !== 'left' && align !== 'center') {
+    return res.status(400).json({ error: "align must be 'left' or 'center'" });
+  }
+
   state.currentMessage = {
-    lines: formatMessage(lines)
+    lines: formatMessage(lines, align)
   };
 
   // Broadcast to all connected displays
