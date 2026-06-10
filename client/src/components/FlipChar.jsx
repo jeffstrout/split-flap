@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { FLIP_HALF_MS, FLIP_FULL_MS, FLIP_GAP_MS } from './flipTiming';
 
 // Characters available on the flip board (space + letters + numbers + punctuation)
 const CHARACTERS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-:\'"/()@#$%&*+';
@@ -66,18 +67,18 @@ function FlipChar({ char, delay = 0, onFlip }) {
       // After half the flip animation, change the character
       setTimeout(() => {
         setDisplayChar(nextChar);
-      }, 40);
+      }, FLIP_HALF_MS);
 
       // After full flip, either continue or stop
       setTimeout(() => {
         setIsFlipping(false);
         step++;
         if (step < steps) {
-          animationRef.current = setTimeout(flipNext, 30);
+          animationRef.current = setTimeout(flipNext, FLIP_GAP_MS);
         } else {
           setCurrentChar(targetChar.current);
         }
-      }, 80);
+      }, FLIP_FULL_MS);
     };
 
     flipNext();

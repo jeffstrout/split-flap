@@ -1,6 +1,6 @@
 # Split-Flap Display — Requirements Document
 
-**Status:** Draft · **Version:** 0.6 · **Last updated:** 2026-06-10
+**Status:** Draft · **Version:** 0.7 · **Last updated:** 2026-06-10
 
 A retro split-flap (Solari board) web application that renders text on a grid of
 animated character tiles and updates all connected displays in real time over
@@ -16,6 +16,8 @@ Requirement IDs are stable references for issues, PRs, and commits:
 tag marks requirements that are not yet implemented.
 
 ### Changelog
+- **0.7** — Split-flap animation runs 2x faster; flip timing centralized in
+  `client/src/components/flipTiming.js` (FR-17).
 - **0.6** — Info screen seconds are shown on 5-second increments
   (`00, 05, 10, …`), aligned to the wall-clock 5s boundary (FR-40).
 - **0.5** — Info Split Flap mode now shows a bottom-row info screen: date
@@ -187,7 +189,9 @@ See NFR-7 (Planned) for backoff.
 ### FR-17 Flip animation
 Each character tile animates through the FR-5 character sequence from its
 current glyph to its target glyph, producing the split-flap effect. An optional
-tick sound plays per flip when sound is enabled.
+tick sound plays per flip when sound is enabled. Flip timing is centralized in
+`client/src/components/flipTiming.js` (single source for JS steps + the CSS
+`--flip-duration`).
 
 ### FR-18 Kiosk display
 The client must render correctly full-screen for unattended kiosk use

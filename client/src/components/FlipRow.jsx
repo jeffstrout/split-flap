@@ -1,5 +1,6 @@
 import React from 'react';
 import FlipChar from './FlipChar';
+import { ROW_STAGGER_MS, CHAR_STAGGER_MS } from './flipTiming';
 
 function FlipRow({ text, cols, rowIndex, onFlip }) {
   // Pad or truncate text to fit columns
@@ -11,7 +12,7 @@ function FlipRow({ text, cols, rowIndex, onFlip }) {
         <FlipChar
           key={index}
           char={char}
-          delay={rowIndex * 50 + index * 20}
+          delay={rowIndex * ROW_STAGGER_MS + index * CHAR_STAGGER_MS}
           onFlip={onFlip}
         />
       ))}
