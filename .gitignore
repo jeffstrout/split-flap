@@ -16,3 +16,7 @@ logs/
 # IDE
 .vscode/
 .idea/
+
+# Persisted runtime state (issue #35)
+server/.state.json
+.state.json

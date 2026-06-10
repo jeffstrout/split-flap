@@ -1,6 +1,6 @@
 # Split-Flap Display — Requirements Document
 
-**Status:** Draft · **Version:** 0.3 · **Last updated:** 2026-06-09
+**Status:** Draft · **Version:** 0.4 · **Last updated:** 2026-06-09
 
 A retro split-flap (Solari board) web application that renders text on a grid of
 animated character tiles and updates all connected displays in real time over
@@ -16,6 +16,9 @@ Requirement IDs are stable references for issues, PRs, and commits:
 tag marks requirements that are not yet implemented.
 
 ### Changelog
+- **0.4** — Added the setup/config screen at `/setup` with a unified
+  display-mode picker and consolidated `GET /api/settings`; state persistence is
+  now on by default (FR-39, NFR-8).
 - **0.3** — QLOCKTWO is now multilingual: added an Arabic (MSA) word
   clock with RTL rendering and a server-owned language setting (FR-38).
 - **0.2** — Added two display modes (split-flap + QLOCKTWO word clock, §6–§7)
@@ -211,6 +214,18 @@ Switching to `qlock` does **not** clear the split-flap message; switching back t
 `flip` restores the last message. The server retains `currentMessage`
 independent of the active mode.
 
+### FR-39 Setup / configuration screen
+A configuration page is served at **`/setup`** (the base URL + `setup`); the live
+display remains at `/`. The setup screen:
+- Presents a single **display mode** picker with three options — **English Word
+  Clock** (`mode=qlock`,`lang=en`), **Arabic Word Clock** (`mode=qlock`,
+  `lang=ar`), **Info Split Flap** (`mode=flip`) — composing the existing `mode` +
+  `qlockLanguage` settings; selecting one applies to all displays immediately.
+- Offers theme (dark/light) and flip-sound (on/off) toggles.
+- Hydrates from current server state on load via the consolidated
+  `GET /api/settings` (`{ mode, qlockLanguage, theme, soundEnabled }`) and stays
+  in sync via the `settings` WebSocket broadcast.
+
 ---
 
 ## 7. Functional Requirements — QLOCKTWO Word-Clock Mode *(Planned)*
@@ -348,6 +363,7 @@ Deploy to **DigitalOcean App Platform** using `.do/app.yaml`:
 | `ALLOWED_ORIGINS` | Server | Comma-separated CORS allow-list | `localhost:3000,3001`; in prod set to the app's public URL |
 | `DEFAULT_MODE` | Server | Boot mode (`flip` \| `qlock`) | `qlock` *(Planned, FR-25)* |
 | `DEFAULT_QLOCK_LANG` | Server | Boot word-clock language (`en` \| `ar`) | `en` *(FR-38)* |
+| `PERSIST_FILE` | Server | State file path; `off` disables | `server/.state.json` *(NFR-8)* |
 
 ### DR-4 CORS
 The server restricts cross-origin requests to `ALLOWED_ORIGINS` (with
@@ -380,8 +396,8 @@ dropped from the set. The client must survive server restarts via FR-16.
 
 ### NFR-4 Statelessness / persistence
 Display state (message, settings, mode) is intentionally **in-memory**; a server
-restart resets content to blank and mode to `DEFAULT_MODE`. Persistence is out
-of scope for v1 (see NFR-8 Planned).
+restart resets to defaults **unless** persistence is enabled (NFR-8, on by
+default), which restores the last message and settings.
 
 ### NFR-5 Browser support
 Modern evergreen browsers (Chrome/Edge/Safari/Firefox) with Web Audio and
@@ -396,8 +412,11 @@ constant. The QLOCKTWO matrix (FR-27) should likewise live in one shared module.
 ### NFR-7 Reconnect backoff *(Planned)*
 Replace the fixed 3 s reconnect (FR-16) with exponential backoff and a cap.
 
-### NFR-8 Optional message persistence *(Planned)*
-Optionally persist the last message and mode so they survive a server restart.
+### NFR-8 State persistence (on by default)
+The last message and the mode/language/theme/sound settings are persisted to
+`server/.state.json` and restored on boot, so the display returns in the mode it
+was last set to. Override the path with `PERSIST_FILE`, or disable with
+`PERSIST_FILE=off`.
 
 ### NFR-9 Burn-in mitigation *(Planned)*
 QLOCKTWO is static for a full minute, risking image retention on OLED/plasma
@@ -452,6 +471,7 @@ split-flap clock's centering), or expose an explicit `align` option.
 | POST | `/api/mode/flip` \| `/qlock` | FR-24 *(Planned)* | Switch display mode |
 | GET | `/api/qlock/language` | FR-38 | Get word-clock language |
 | POST | `/api/qlock/language/en` \| `/ar` | FR-38 | Set word-clock language |
+| GET | `/api/settings` | FR-39 | Consolidated current settings |
 | GET | `/api/health` | FR-21 *(Planned)* | Liveness/readiness |
 
 **Message format**
