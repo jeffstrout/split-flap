@@ -238,6 +238,16 @@ router.post('/qlock/language/:lang', (req, res) => {
   res.json({ success: true, qlockLanguage: lang });
 });
 
+// GET /api/settings - Consolidated current settings (for the setup screen)
+router.get('/settings', (req, res) => {
+  res.json({
+    mode: state.mode,
+    qlockLanguage: state.qlockLanguage,
+    theme: state.theme,
+    soundEnabled: state.soundEnabled
+  });
+});
+
 // GET /api/health - Liveness/readiness probe for deployment monitoring
 router.get('/health', (req, res) => {
   res.json({

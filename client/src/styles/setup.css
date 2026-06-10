@@ -1,0 +1,61 @@
+/* Setup / config screen (issue #35). */
+.setup {
+  min-height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 6vh 16px;
+  box-sizing: border-box;
+  font-family: 'Roboto Condensed', system-ui, sans-serif;
+}
+.setup.theme-dark { background: #0a0a0a; color: #f2f2f2; }
+.setup.theme-light { background: #f4f4f4; color: #111; }
+
+.setup-loading { opacity: 0.7; }
+
+.setup-card {
+  width: 100%;
+  max-width: 640px;
+}
+
+.setup-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.setup-header h1 { font-size: 28px; font-weight: 700; margin: 0; letter-spacing: 0.02em; }
+.setup-link { color: inherit; opacity: 0.7; text-decoration: none; font-size: 15px; }
+.setup-link:hover { opacity: 1; }
+
+.setup-section { margin-top: 28px; }
+.setup-section h2 {
+  font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em;
+  opacity: 0.6; margin: 0 0 12px; font-weight: 700;
+}
+
+.setup-modes { display: flex; flex-direction: column; gap: 12px; }
+.setup-mode {
+  display: flex; flex-direction: column; gap: 4px; text-align: left;
+  padding: 16px 18px; border-radius: 12px; cursor: pointer;
+  background: transparent; color: inherit;
+  border: 2px solid currentColor; opacity: 0.55;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+.setup-mode:hover { opacity: 0.85; }
+.setup-mode.active { opacity: 1; background: color-mix(in srgb, currentColor 12%, transparent); }
+.setup-mode:disabled { cursor: default; }
+.setup-mode-label { font-size: 19px; font-weight: 700; }
+.setup-mode-hint { font-size: 14px; opacity: 0.7; }
+
+.setup-row { display: flex; gap: 40px; flex-wrap: wrap; }
+
+.setup-toggle { display: inline-flex; border: 2px solid currentColor; border-radius: 10px; overflow: hidden; }
+.setup-toggle button {
+  background: transparent; color: inherit; border: 0; cursor: pointer;
+  padding: 10px 22px; font: inherit; font-weight: 700; opacity: 0.55;
+}
+.setup-toggle button.active { opacity: 1; background: color-mix(in srgb, currentColor 16%, transparent); }
+
+.setup-note { margin-top: 32px; font-size: 14px; opacity: 0.55; }

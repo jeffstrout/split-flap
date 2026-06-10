@@ -9,6 +9,22 @@ A retro split-flap display web application with real-time updates via WebSocket.
 - **Deployment**: DigitalOcean App Platform
 - **Font**: Google Fonts — Roboto Condensed 700 (loaded in `client/index.html`)
 
+## Display Modes & Setup
+
+The display runs in one of three user-facing modes, settable from the setup
+screen or the API. Each composes the server's `mode` + `qlockLanguage` settings:
+
+| Mode | `mode` | `qlockLanguage` |
+|------|--------|-----------------|
+| English Word Clock | `qlock` | `en` |
+| Arabic Word Clock (RTL) | `qlock` | `ar` |
+| Info Split Flap | `flip` | — |
+
+- **Display**: `/` — the live wall display (kiosk).
+- **Setup**: `/setup` (e.g. `http://localhost:3000/setup`) — pick the mode,
+  theme, and flip sound. Changes apply to all displays instantly via WebSocket
+  and are persisted across restarts (see Persistence below).
+
 ## Running the Application
 
 ```bash
@@ -74,6 +90,9 @@ doctl apps logs <app-id> api --type run
 |----------|-------|---------|
 | `PORT` | Server | HTTP port (default: 3001) |
 | `ALLOWED_ORIGINS` | Server | CORS origins (default: localhost:3000,3001) |
+| `DEFAULT_MODE` | Server | Boot mode `flip`\|`qlock` (default: `qlock`) |
+| `DEFAULT_QLOCK_LANG` | Server | Boot word-clock language `en`\|`ar` (default: `en`) |
+| `PERSIST_FILE` | Server | State file path. On by default (`server/.state.json`); set to `off` to disable |
 
 ### WebSocket in Production
 
@@ -122,6 +141,29 @@ Sound is **enabled by default**. The mechanical tick sound plays automatically w
 
 Theme is **dark by default**.
 
+### Mode
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/mode` | Get current display mode |
+| `POST` | `/api/mode/flip` | Switch all displays to the split-flap board |
+| `POST` | `/api/mode/qlock` | Switch all displays to the QLOCKTWO word clock |
+
+### Word-clock language
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/qlock/language` | Get word-clock language |
+| `POST` | `/api/qlock/language/en` | English word clock |
+| `POST` | `/api/qlock/language/ar` | Arabic word clock (RTL) |
+
+### Settings & health
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/settings` | Consolidated `{ mode, qlockLanguage, theme, soundEnabled }` (used by `/setup`) |
+| `GET` | `/api/health` | Liveness/readiness probe `{ status, uptime, connectedClients, mode }` |
+
 ### Message Format
 
 ```json
@@ -134,7 +176,7 @@ Theme is **dark by default**.
 }
 ```
 
-Lines are automatically uppercased and centered. Max 24 characters per line, 8 rows.
+Lines are uppercased and truncated/padded to 24 chars (max 8 rows). Pass `"align": "center"` to center each line; default is left-aligned.
 
 ## WebSocket Protocol
 
@@ -162,29 +204,36 @@ The server pushes state to all connected clients via WebSocket. Two message type
 
 Each line is exactly 24 characters, padded with spaces. Always 8 lines.
 
-### `settings` — Sound and theme
+### `settings` — Sound, theme, mode, language
 
 ```json
 {
   "type": "settings",
   "data": {
     "soundEnabled": true,
-    "theme": "dark"
+    "theme": "dark",
+    "mode": "qlock",
+    "qlockLanguage": "en"
   }
 }
 ```
 
-Sent on connect and whenever sound or theme changes.
+Sent on connect and whenever sound, theme, mode, or word-clock language changes.
 
 ## Configuration
 
-Board dimensions are defined in four places (keep in sync):
-- `client/src/App.jsx` - ROWS, COLS constants
-- `server/src/routes/messages.js` - ROWS, COLS constants
-- `server/src/index.js` - initial state padEnd value
-- `client/src/styles/flip.css` - width calc divisor (`24` in the width calculation)
+Board dimensions have a single source of truth: `server/src/config.js`
+(`ROWS`, `COLS` = 8 x 24). The client imports it at build time via the Vite
+`@board` alias (inlined into the bundle); CSS reads `--board-rows`/`--board-cols`
+set from it in `main.jsx`. The QLOCKTWO letter matrices live in
+`client/src/qlock/lang/{en,ar}.js`.
 
-Current: 24 columns x 8 rows
+### Persistence
+
+State (last message + mode/language/theme/sound) is persisted **on by default**
+to `server/.state.json` and restored on boot, so the display returns in the mode
+it was last set to. Override the path with `PERSIST_FILE=<path>`, or disable with
+`PERSIST_FILE=off`. (`server/src/persistence.js`)
 
 ### Supported Characters
 
@@ -213,7 +262,12 @@ chrome.exe --kiosk http://localhost:3000
 - `client/index.html` - HTML shell, Google Fonts (Roboto Condensed 700)
 - `client/vite.config.js` - Vite config with dev proxy (`/api` → localhost:3001)
 - `client/src/main.jsx` - React entry point
-- `client/src/App.jsx` - Root component, WebSocket state management
+- `client/src/App.jsx` - Path router (`/` display, `/setup` config)
+- `client/src/Display.jsx` - Live display: WebSocket state + active-mode render
+- `client/src/Setup.jsx` - Setup/config screen (mode, theme, sound)
+- `client/src/components/QlockTwo.jsx` - QLOCKTWO word clock (EN/AR, RTL)
+- `client/src/components/Controls.jsx` - On-screen sound/theme controls
+- `client/src/qlock/` - Word-clock matrices (`lang/en.js`, `lang/ar.js`) + `timeToWords.js`
 - `client/src/components/FlipBoard.jsx` - Board container + audio synthesis
 - `client/src/components/FlipRow.jsx` - Row of characters, maps text to FlipChar
 - `client/src/components/FlipChar.jsx` - Individual character flip animation
@@ -222,8 +276,10 @@ chrome.exe --kiosk http://localhost:3000
 
 ### Server
 
-- `server/src/index.js` - Express server, WebSocket setup, CORS config, state
-- `server/src/routes/messages.js` - API endpoints, clock logic, sound/theme control
+- `server/src/index.js` - Express server, WebSocket setup, CORS, state, persistence wiring
+- `server/src/routes/messages.js` - API endpoints (message, clock, sound, theme, mode, language, settings, health)
+- `server/src/config.js` - Single source of truth for board dimensions
+- `server/src/persistence.js` - State persistence (on by default)
 
 ### Config & DevOps
 
@@ -278,15 +334,15 @@ Edits on `main` are blocked by a PreToolUse hook. Always work on a feature branc
 - [ ] Test full deploy cycle: push to main → `/deploy` → verify in browser
 
 ### Code Quality
-- [ ] Add input validation for message lines (check array element types, length limits)
+- [x] Add input validation for message lines (check array element types, length limits)
 - [ ] Add exponential backoff to WebSocket reconnect (currently retries every 3s forever)
-- [ ] Extract shared ROWS/COLS constants to avoid duplication across 4 files
+- [x] Extract shared ROWS/COLS constants (now `server/src/config.js` + `@board` alias)
 - [ ] Add `React.memo` to FlipChar to prevent unnecessary re-renders
 
 ### Features
-- [ ] Add UI controls for sound/theme toggle (currently API-only)
-- [ ] Add a health/status endpoint (`GET /api/health`) for deployment monitoring
-- [ ] Consider message persistence (optional — currently in-memory only)
+- [x] Add UI controls for sound/theme toggle (`Controls.jsx`, plus `/setup`)
+- [x] Add a health/status endpoint (`GET /api/health`) for deployment monitoring
+- [x] Message + settings persistence (`server/src/persistence.js`, on by default)
 
 ### DevOps
 - [x] Set up GitHub Actions for automated PR review (`pr-claude-code-review.yml`)

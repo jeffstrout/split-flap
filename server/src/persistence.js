@@ -1,10 +1,17 @@
 import { readFileSync, writeFileSync } from 'fs';
+import { fileURLToPath } from 'url';
 
-// Optional persistence (NFR-8). OFF by default — enable by setting
-// PERSIST_FILE to a writable path. Persists the last message and the
-// sound/theme/mode settings so they survive a restart. Saved on a short
-// interval and on shutdown; loaded on boot.
-const FILE = process.env.PERSIST_FILE;
+// State persistence (NFR-8). ENABLED BY DEFAULT so the display returns in the
+// mode/language/theme it was last set to (issue #35). It persists the last
+// message and the sound/theme/mode/language settings, saved on a short interval
+// and on shutdown, loaded on boot.
+//
+// Configuration:
+//   PERSIST_FILE=<path>  override the storage path
+//   PERSIST_FILE=off     disable persistence entirely
+const DEFAULT_FILE = fileURLToPath(new URL('../.state.json', import.meta.url));
+const raw = process.env.PERSIST_FILE;
+const FILE = raw === 'off' ? null : (raw || DEFAULT_FILE);
 export const persistenceEnabled = Boolean(FILE);
 
 const SAVE_INTERVAL_MS = 10000;
