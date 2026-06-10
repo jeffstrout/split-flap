@@ -48,6 +48,7 @@ export const state = {
   clockInterval: null,
   clockTimeout: null,
   infoInterval: null,
+  infoTimeout: null,
   soundEnabled: true,
   theme: 'dark', // 'dark' = black bg/white text, 'light' = white bg/black text
   mode: DEFAULT_MODE, // 'flip' = split-flap board, 'qlock' = QLOCKTWO word clock

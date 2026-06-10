@@ -311,7 +311,7 @@ function generateInfoMessage() {
   const left = `${DAY_ABBR[now.getDay()]} ${MONTH_ABBR[now.getMonth()]} ${now.getDate()}`;
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
-  const ss = String(now.getSeconds()).padStart(2, '0');
+  const ss = String(Math.floor(now.getSeconds() / 5) * 5).padStart(2, '0');
   const right = `${hh}:${mm}:${ss}`;
 
   const gap = Math.max(1, COLS - left.length - right.length);
@@ -333,14 +333,28 @@ export function startInfoScreen() {
     state.currentMessage = { lines: generateInfoMessage() };
     broadcast({ type: 'message', data: state.currentMessage });
   };
-  update();
-  state.infoInterval = setInterval(update, INFO_INTERVAL_MS);
+
+  update(); // show immediately (seconds already floored to a multiple of 5)
+
+  // Align the recurring refresh to the next wall-clock 5-second boundary so the
+  // displayed seconds advance cleanly 00 -> 05 -> 10 ...
+  const now = new Date();
+  const msToNextBoundary =
+    INFO_INTERVAL_MS - (now.getSeconds() % 5) * 1000 - now.getMilliseconds();
+  state.infoTimeout = setTimeout(() => {
+    update();
+    state.infoInterval = setInterval(update, INFO_INTERVAL_MS);
+  }, msToNextBoundary);
 }
 
 export function stopInfoScreen() {
   if (state.infoInterval) {
     clearInterval(state.infoInterval);
     state.infoInterval = null;
+  }
+  if (state.infoTimeout) {
+    clearTimeout(state.infoTimeout);
+    state.infoTimeout = null;
   }
 }
 
