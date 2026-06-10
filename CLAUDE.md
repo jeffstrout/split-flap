@@ -20,6 +20,11 @@ screen or the API. Each composes the server's `mode` + `qlockLanguage` settings:
 | Arabic Word Clock (RTL) | `qlock` | `ar` |
 | Info Split Flap | `flip` | — |
 
+- In **Info Split Flap** mode the bottom row shows the day/month/date
+  (left-justified) and the 24-hour `HH:MM:SS` time (right-justified),
+  refreshing every 5 seconds. It runs automatically while in flip mode; a
+  custom `POST /api/message` shows until the next tick, and starting the legacy
+  minute clock (`/api/clock/start`) takes over.
 - **Display**: `/` — the live wall display (kiosk).
 - **Setup**: `/setup` (e.g. `http://localhost:3000/setup`) — pick the mode,
   theme, and flip sound. Changes apply to all displays instantly via WebSocket

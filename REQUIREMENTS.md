@@ -1,6 +1,6 @@
 # Split-Flap Display — Requirements Document
 
-**Status:** Draft · **Version:** 0.4 · **Last updated:** 2026-06-09
+**Status:** Draft · **Version:** 0.5 · **Last updated:** 2026-06-10
 
 A retro split-flap (Solari board) web application that renders text on a grid of
 animated character tiles and updates all connected displays in real time over
@@ -16,6 +16,8 @@ Requirement IDs are stable references for issues, PRs, and commits:
 tag marks requirements that are not yet implemented.
 
 ### Changelog
+- **0.5** — Info Split Flap mode now shows a bottom-row info screen: date
+  (left) + 24h HH:MM:SS time (right), refreshing every 5 seconds (FR-40).
 - **0.4** — Added the setup/config screen at `/setup` with a unified
   display-mode picker and consolidated `GET /api/settings`; state persistence is
   now on by default (FR-39, NFR-8).
@@ -123,6 +125,16 @@ interval.
 > The split-flap clock (FR-8–FR-10) and the QLOCKTWO word clock (§7) are
 > distinct features. The split-flap clock writes text to the board; QLOCKTWO is
 > a separate visual mode.
+
+### FR-40 Split-flap info screen
+While in **Info Split Flap** mode (`mode=flip`) the board shows an info screen on
+its bottom row (server-driven, refreshing **every 5 seconds**):
+- **Bottom-left**, left-justified: day + month abbreviations + date (`WED JUN 10`).
+- **Bottom-right**, right-justified: 24-hour time `HH:MM:SS` (`11:34:08`).
+
+It starts automatically on entering flip mode (and on boot if `DEFAULT_MODE=flip`)
+and stops on leaving it. A custom `POST /api/message` displays until the next 5s
+tick; `POST /api/clock/start` (legacy minute clock) takes over the board.
 
 ---
 
