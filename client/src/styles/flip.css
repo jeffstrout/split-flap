@@ -113,7 +113,7 @@
   height: 50%;
   transform-origin: bottom center;
   transform-style: preserve-3d;
-  transition: transform 0.08s ease-in;
+  transition: transform var(--flip-duration, 40ms) ease-in;
   pointer-events: none;
 }
 

@@ -277,6 +277,7 @@ chrome.exe --kiosk http://localhost:3000
 - `client/src/components/FlipBoard.jsx` - Board container + audio synthesis
 - `client/src/components/FlipRow.jsx` - Row of characters, maps text to FlipChar
 - `client/src/components/FlipChar.jsx` - Individual character flip animation
+- `client/src/components/flipTiming.js` - Flip animation timing (single source; 2x speed)
 - `client/src/hooks/useWebSocket.js` - Auto-reconnecting WebSocket hook
 - `client/src/styles/flip.css` - Styling, dimensions, animations, theme support
 
