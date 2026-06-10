@@ -1,6 +1,6 @@
 # Split-Flap Display — Requirements Document
 
-**Status:** Draft · **Version:** 0.5 · **Last updated:** 2026-06-10
+**Status:** Draft · **Version:** 0.6 · **Last updated:** 2026-06-10
 
 A retro split-flap (Solari board) web application that renders text on a grid of
 animated character tiles and updates all connected displays in real time over
@@ -16,6 +16,8 @@ Requirement IDs are stable references for issues, PRs, and commits:
 tag marks requirements that are not yet implemented.
 
 ### Changelog
+- **0.6** — Info screen seconds are shown on 5-second increments
+  (`00, 05, 10, …`), aligned to the wall-clock 5s boundary (FR-40).
 - **0.5** — Info Split Flap mode now shows a bottom-row info screen: date
   (left) + 24h HH:MM:SS time (right), refreshing every 5 seconds (FR-40).
 - **0.4** — Added the setup/config screen at `/setup` with a unified
@@ -130,7 +132,9 @@ interval.
 While in **Info Split Flap** mode (`mode=flip`) the board shows an info screen on
 its bottom row (server-driven, refreshing **every 5 seconds**):
 - **Bottom-left**, left-justified: day + month abbreviations + date (`WED JUN 10`).
-- **Bottom-right**, right-justified: 24-hour time `HH:MM:SS` (`11:34:08`).
+- **Bottom-right**, right-justified: 24-hour time `HH:MM:SS`, with seconds on
+  5-second increments (`00, 05, …, 55`) aligned to the wall-clock boundary
+  (`11:34:05`).
 
 It starts automatically on entering flip mode (and on boot if `DEFAULT_MODE=flip`)
 and stops on leaving it. A custom `POST /api/message` displays until the next 5s
