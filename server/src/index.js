@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
-import messagesRouter from './routes/messages.js';
+import messagesRouter, { startInfoScreen } from './routes/messages.js';
 import { ROWS, COLS } from './config.js';
 import { loadPersisted, startPersistence } from './persistence.js';
 
@@ -47,6 +47,7 @@ export const state = {
   clients: new Set(),
   clockInterval: null,
   clockTimeout: null,
+  infoInterval: null,
   soundEnabled: true,
   theme: 'dark', // 'dark' = black bg/white text, 'light' = white bg/black text
   mode: DEFAULT_MODE, // 'flip' = split-flap board, 'qlock' = QLOCKTWO word clock
@@ -63,6 +64,9 @@ if (persisted) {
   if (VALID_LANGS.includes(persisted.qlockLanguage)) state.qlockLanguage = persisted.qlockLanguage;
 }
 startPersistence(state);
+
+// Start the split-flap info screen if booting into flip mode (issue #37).
+if (state.mode === 'flip') startInfoScreen();
 
 // Routes
 app.use('/api', messagesRouter);

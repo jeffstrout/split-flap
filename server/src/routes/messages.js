@@ -118,6 +118,8 @@ router.get('/test', (req, res) => {
 
 // POST /api/clock/start - Start the clock (updates every minute on the minute)
 router.post('/clock/start', (req, res) => {
+  // Explicit minute clock takes over from the info screen.
+  stopInfoScreen();
   if (state.clockInterval) {
     clearInterval(state.clockInterval);
   }
@@ -211,6 +213,7 @@ router.get('/mode', (req, res) => {
 // POST /api/mode/flip - Switch all displays to the split-flap board
 router.post('/mode/flip', (req, res) => {
   state.mode = 'flip';
+  startInfoScreen();
   broadcastSettings();
   res.json({ success: true, mode: 'flip' });
 });
@@ -218,6 +221,7 @@ router.post('/mode/flip', (req, res) => {
 // POST /api/mode/qlock - Switch all displays to the QLOCKTWO word clock
 router.post('/mode/qlock', (req, res) => {
   state.mode = 'qlock';
+  stopInfoScreen();
   broadcastSettings();
   res.json({ success: true, mode: 'qlock' });
 });
@@ -292,6 +296,52 @@ function generateTimeMessage() {
     const padding = Math.floor((COLS - line.length) / 2);
     return ' '.repeat(padding) + line;
   });
+}
+
+// --- Split-flap info screen (issue #37) ----------------------------------
+// Bottom-left: day + month + date (left-justified). Bottom-right: 24h
+// HH:MM:SS (right-justified). Runs while in 'flip' mode, refreshing every 5s.
+const DAY_ABBR = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const MONTH_ABBR = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+                    'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+const INFO_INTERVAL_MS = 5000;
+
+function generateInfoMessage() {
+  const now = new Date();
+  const left = `${DAY_ABBR[now.getDay()]} ${MONTH_ABBR[now.getMonth()]} ${now.getDate()}`;
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  const right = `${hh}:${mm}:${ss}`;
+
+  const gap = Math.max(1, COLS - left.length - right.length);
+  const bottom = (left + ' '.repeat(gap) + right).substring(0, COLS).padEnd(COLS, ' ');
+
+  const lines = [];
+  for (let i = 0; i < ROWS - 1; i++) lines.push(''.padEnd(COLS, ' '));
+  lines.push(bottom);
+  return lines;
+}
+
+export function startInfoScreen() {
+  stopInfoScreen();
+  // The info screen owns the board in flip mode — stop the legacy minute clock.
+  if (state.clockInterval) { clearInterval(state.clockInterval); state.clockInterval = null; }
+  if (state.clockTimeout) { clearTimeout(state.clockTimeout); state.clockTimeout = null; }
+
+  const update = () => {
+    state.currentMessage = { lines: generateInfoMessage() };
+    broadcast({ type: 'message', data: state.currentMessage });
+  };
+  update();
+  state.infoInterval = setInterval(update, INFO_INTERVAL_MS);
+}
+
+export function stopInfoScreen() {
+  if (state.infoInterval) {
+    clearInterval(state.infoInterval);
+    state.infoInterval = null;
+  }
 }
 
 export default router;
