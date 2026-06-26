@@ -52,7 +52,9 @@ jobs:
             1. Read .claude/agents/code-reviewer.md for the full checklist
             2. Run `git diff origin/${{ steps.pr-info.outputs.base_ref }}...HEAD` to see changes
             3. Apply the review checklist to modified files
-            4. Provide feedback organized by severity (Critical, Warning, Suggestion)
+            4. Post your feedback as a SINGLE consolidated PR comment, organized by
+               severity (Critical, Warning, Suggestion). Skip `npm run build` unless
+               a change makes you genuinely doubt the build still passes.
           claude_args: |
-            --max-turns 10
+            --max-turns 25
             --allowedTools "Read,Glob,Grep,Bash(git:*),Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(npm run build:*)"
