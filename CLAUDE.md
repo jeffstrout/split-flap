@@ -126,6 +126,7 @@ doctl apps logs <app-id> api --type run
 | Variable | Where | Purpose |
 |----------|-------|---------|
 | `PORT` | Server | HTTP port (default: 3001) |
+| `TZ` | Server/container | IANA timezone for the info-screen clock (e.g. `America/Chicago`). Defaults to UTC; `tzdata` is in the image |
 | `ALLOWED_ORIGINS` | Server | CORS origins (default: localhost:3000,3001) |
 | `DEFAULT_MODE` | Server | Boot mode `flip`\|`qlock` (default: `qlock`) |
 | `DEFAULT_QLOCK_LANG` | Server | Boot word-clock language `en`\|`ar` (default: `en`) |

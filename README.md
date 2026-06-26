@@ -73,6 +73,7 @@ defaults below apply.
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `HOST_PORT` | `8080` | Host port the display + API are served on |
+| `TZ` | `UTC` | Timezone for the clock, IANA name (e.g. `America/Chicago`). Set this or the clock shows UTC |
 | `DEFAULT_MODE` | `qlock` | Boot mode: `qlock` (word clock) or `flip` (split-flap) |
 | `DEFAULT_QLOCK_LANG` | `en` | Word-clock language: `en` or `ar` (Arabic, RTL) |
 | `PERSIST_FILE` | `/data/.state.json` | State file on the volume; `off` to disable |

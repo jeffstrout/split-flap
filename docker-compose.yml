@@ -13,6 +13,7 @@ services:
     environment:
       # All optional — these fall back to the app's built-in defaults.
       # Override by creating a .env file (see .env.example).
+      TZ: ${TZ:-UTC}                              # e.g. America/Chicago
       DEFAULT_MODE: ${DEFAULT_MODE:-qlock}        # qlock | flip
       DEFAULT_QLOCK_LANG: ${DEFAULT_QLOCK_LANG:-en}  # en | ar
       PERSIST_FILE: ${PERSIST_FILE:-/data/.state.json}  # "off" to disable

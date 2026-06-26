@@ -34,7 +34,15 @@ RUN cd client && npm run build      # → /build/client/dist
 FROM node:20-bookworm-slim AS runtime
 WORKDIR /app
 
+# tzdata so the info-screen clock can honor a local timezone via the TZ env var
+# (the slim base image only knows UTC). Set TZ in docker-compose / .env.
+RUN apt-get update && apt-get install -y --no-install-recommends tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV NODE_ENV=production
+# Local timezone for the clock; override via docker-compose / .env (e.g.
+# TZ=America/Chicago). Defaults to UTC.
+ENV TZ=UTC
 # Tells the server to serve the built client from this path (single container).
 ENV CLIENT_DIST=/app/client/dist
 # Persist message + settings on the mounted /data volume (survives restarts).
