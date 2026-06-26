@@ -16,6 +16,9 @@ Requirement IDs are stable references for issues, PRs, and commits:
 tag marks requirements that are not yet implemented.
 
 ### Changelog
+- **0.8** — Info screen now refreshes every 10 seconds with seconds on
+  10-second increments (`00, 10, …, 50`), aligned to the wall-clock 10s
+  boundary (FR-40).
 - **0.7** — Split-flap animation runs 2x faster; flip timing centralized in
   `client/src/components/flipTiming.js` (FR-17).
 - **0.6** — Info screen seconds are shown on 5-second increments
@@ -132,14 +135,14 @@ interval.
 
 ### FR-40 Split-flap info screen
 While in **Info Split Flap** mode (`mode=flip`) the board shows an info screen on
-its bottom row (server-driven, refreshing **every 5 seconds**):
+its bottom row (server-driven, refreshing **every 10 seconds**):
 - **Bottom-left**, left-justified: day + month abbreviations + date (`WED JUN 10`).
 - **Bottom-right**, right-justified: 24-hour time `HH:MM:SS`, with seconds on
-  5-second increments (`00, 05, …, 55`) aligned to the wall-clock boundary
-  (`11:34:05`).
+  10-second increments (`00, 10, …, 50`) aligned to the wall-clock boundary
+  (`11:34:10`).
 
 It starts automatically on entering flip mode (and on boot if `DEFAULT_MODE=flip`)
-and stops on leaving it. A custom `POST /api/message` displays until the next 5s
+and stops on leaving it. A custom `POST /api/message` displays until the next 10s
 tick; `POST /api/clock/start` (legacy minute clock) takes over the board.
 
 ---
