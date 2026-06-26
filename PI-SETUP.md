@@ -115,34 +115,57 @@ choice persists across reboots.
 
 ## 5. Make the Pi the display (Chromium kiosk on HDMI)
 
-**a) Boot to desktop with autologin** and **disable screen blanking**:
+Raspberry Pi OS **Lite** has no desktop or browser, which is ideal for a kiosk —
+nothing wasted on a full desktop. We add a minimal fullscreen browser with
+**cage** (a tiny Wayland kiosk compositor) launched from a console auto-login.
+This is the setup verified on a real 3B+; no keyboard or mouse is needed.
+
+> **Desktop image instead of Lite?** If `chromium` is already installed and you
+> have a desktop session, you can skip cage and drop a
+> `~/.config/autostart/*.desktop` entry instead — but the Lite + cage path below
+> is lighter and is what these instructions assume.
+
+**a) Install cage + Chromium:**
 
 ```bash
-sudo raspi-config
-#   System Options  → Boot / Auto Login → "Desktop Autologin"
-#   Display Options → Screen Blanking   → "No"
-#   Finish → reboot
+sudo apt update
+sudo apt install -y cage chromium
+ls /usr/bin/chromium*        # note the binary name (usually /usr/bin/chromium)
 ```
 
-**b) Autostart Chromium in kiosk mode** pointing at the local container:
+**b) Auto-login the HDMI console as `pi` on boot** (no keyboard needed):
 
 ```bash
-mkdir -p ~/.config/autostart
-cat > ~/.config/autostart/splitflap-kiosk.desktop <<'EOF'
-[Desktop Entry]
-Type=Application
-Name=Split-Flap Kiosk
-Exec=chromium-browser --kiosk --app=http://localhost:8080 --noerrdialogs --disable-infobars --incognito --enable-gpu-rasterization --ignore-gpu-blocklist --disable-features=Translate --check-for-update-interval=31536000
-X-GNOME-Autostart-enabled=true
+sudo raspi-config nonint do_boot_behaviour B2   # B2 = Console Autologin
+```
+
+**c) Launch the kiosk from that console login.** Append this to `~/.bash_profile`
+so it runs only on the physical console (tty1). Note `--disable-gpu`: the 3B+'s
+VideoCore IV GPU can't give Chromium a working GL ES context under Wayland
+(it black-screens with hardware GL), so we render in software — fine for this
+mostly-CSS board:
+
+```bash
+cat >> ~/.bash_profile <<'EOF'
+# Split-Flap kiosk: on the HDMI console (tty1) only, run the board fullscreen
+if [ "$(tty)" = "/dev/tty1" ]; then
+  exec cage -- chromium --kiosk --ozone-platform=wayland \
+    --noerrdialogs --disable-infobars --incognito \
+    --disable-gpu --disable-gpu-compositing --test-type \
+    http://localhost:8080 >/home/pi/cage.log 2>&1
+fi
 EOF
 
 sudo reboot
 ```
 
-(If `chromium-browser` is missing: `sudo apt install -y chromium-browser`.)
+> If `ls` in step (a) showed the binary is `chromium-browser` rather than
+> `chromium`, use that name in the `exec` line instead.
 
-On boot the Pi auto-logs in, the container is already running
-(`restart: unless-stopped`), and Chromium opens full-screen on the HDMI display.
+On boot the Pi auto-logs into the console, the container is already running
+(`restart: unless-stopped`), and cage launches Chromium fullscreen on the HDMI
+display. If cage exits, the login re-runs and relaunches it automatically.
+Chromium's output (GPU/Wayland messages) goes to `~/cage.log` for debugging.
 
 ---
 
@@ -170,4 +193,6 @@ reboots and rebuilds — only `down -v` clears them.
 | `docker: permission denied` | You skipped the reboot in step 1 (`usermod -aG docker`) |
 | Page unreachable from another device | Use the Pi's IP; check `docker compose ps` shows it `Up` |
 | Animation stutters on full-board changes | Set `FLIP_SPEED=1` in `.env`, rebuild |
-| Screen sleeps / goes black | Redo the Screen Blanking step; see [KIOSK.md](KIOSK.md) |
+| Console shows a **login prompt**, not the board | The kiosk session didn't launch — check `cat ~/cage.log` and that step 5b/5c ran; restart with `sudo systemctl restart getty@tty1` |
+| Screen is **black** (cursor or blank) with `connectedClients: 1` | Chromium's GPU process is crashing — confirm `--disable-gpu` is in the `~/.bash_profile` launch line (see `~/cage.log` for `eglCreateContext` errors) |
+| `chromium`/`cage` not found | `sudo apt install -y cage chromium`; match the binary name in `~/.bash_profile` |

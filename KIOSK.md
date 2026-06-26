@@ -25,31 +25,41 @@ The app already:
 
 ## Raspberry Pi (HDMI display)
 
-Run the container (see `README.md`), then point the Pi's own browser at it. The
-Pi is both the server and the display.
+The Pi is both the server and the display. On **Raspberry Pi OS Lite** (no
+desktop) the verified setup is **cage** (a minimal Wayland kiosk compositor) +
+Chromium, launched from a console auto-login. Full step-by-step:
+[PI-SETUP.md](PI-SETUP.md#5-make-the-pi-the-display-chromium-kiosk-on-hdmi).
 
 ```bash
-# Raspberry Pi OS — Chromium kiosk pointing at the local container.
-# The GPU flags matter on the Pi 3B+: they force hardware-accelerated
-# compositing for the flip animation instead of slower software rendering.
-chromium-browser --kiosk --app=http://localhost:8080 \
+# On the Pi (Raspberry Pi OS Lite):
+sudo apt install -y cage chromium
+
+# Launch fullscreen on the HDMI console. --disable-gpu is REQUIRED on the 3B+:
+# its VideoCore IV GPU can't give Chromium a working GL ES context under Wayland
+# (hardware GL black-screens), so render in software.
+cage -- chromium --kiosk --ozone-platform=wayland \
   --noerrdialogs --disable-infobars --incognito \
-  --enable-gpu-rasterization --ignore-gpu-blocklist \
-  --enable-zero-copy --disable-features=Translate
+  --disable-gpu --disable-gpu-compositing --test-type \
+  http://localhost:8080
 ```
 
-Performance notes for the **Pi 3B+** (the display is the bottleneck, not the
-server):
+> ⚠️ Do **not** use `--enable-gpu-rasterization --ignore-gpu-blocklist` on the
+> 3B+ — forcing the hardware GPU path makes Chromium's GPU process crash and the
+> screen stays black. Software rendering (`--disable-gpu`) is correct here; the
+> board is mostly CSS, so it renders fine.
+
+Performance notes for the **Pi 3B+** (rendering is the bottleneck, not the
+server, and it's software-rendered here):
 
 - The **word-clock modes** (`qlock`) have no flip animation and run smoothly.
 - **Full-board split-flap** transitions animate up to ~192 tiles at once and can
-  stutter on the 3B+'s single Cortex-A53; the idle 5-second info-screen ticks
-  are light. A **Pi 4B** handles the heavy animation noticeably better.
+  stutter on the 3B+'s single Cortex-A53; the idle info-screen ticks are light.
+  A **Pi 4B** handles the heavy animation noticeably better.
 - `FlipChar` is wrapped in `React.memo` to cut re-renders. If full-board
-  animations feel too busy on the 3B+, **slow the flip down**: set `FLIP_SPEED=1`
-  in `.env` (1 = original speed, 2 = default/2x) and rebuild with
+  animations feel too busy, **slow the flip down**: set `FLIP_SPEED=1` in `.env`
+  (1 = original speed, 2 = default/2x) and rebuild with
   `docker compose up -d --build`.
-- Run **64-bit Raspberry Pi OS** for the smoothest Chromium + `arm64` image.
+- Run **64-bit Raspberry Pi OS** for the smoothest `arm64` image.
 
 ## Prevent the OS from sleeping / screensaver
 

@@ -94,8 +94,10 @@ the flip animation, not the server.
   animating at once stresses a single Cortex-A53 core. Expect some jank on big
   changes; the idle 5-second info-screen ticks (only a few characters change)
   are fine. A Pi 4B handles the heavy animation noticeably better.
-- The client is built with `React.memo` on each tile to minimize re-renders, and
-  [KIOSK.md](KIOSK.md) documents the Chromium GPU flags worth setting on the Pi.
+- The client is built with `React.memo` on each tile to minimize re-renders. On
+  the 3B+ the kiosk renders in **software** (`--disable-gpu`) — its VideoCore IV
+  GPU can't drive Chromium's GL ES under Wayland — which is fine for this
+  mostly-CSS board. Setup details in [PI-SETUP.md](PI-SETUP.md) / [KIOSK.md](KIOSK.md).
 - **Tune the flip speed** for weaker hardware: set `FLIP_SPEED=1` in `.env`
   (1 = original, 2 = default/2x) and rebuild. Slower flips are gentler on the
   3B+ because there's less per-frame churn.
