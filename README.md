@@ -56,6 +56,10 @@ Then open **`http://<pi-ip>:8080`** from any browser on your network. The Pi
 itself can be the display: plug it into a monitor over HDMI and launch Chromium
 in kiosk mode (see [KIOSK.md](KIOSK.md)).
 
+> **Setting up a Pi from a fresh OS install?** Follow the step-by-step
+> [PI-SETUP.md](PI-SETUP.md) runbook (Docker install, swap, build, and Chromium
+> kiosk autostart).
+
 The container has `restart: unless-stopped`, so it comes back automatically after
 a reboot or power loss.
 
@@ -72,6 +76,7 @@ defaults below apply.
 | `DEFAULT_MODE` | `qlock` | Boot mode: `qlock` (word clock) or `flip` (split-flap) |
 | `DEFAULT_QLOCK_LANG` | `en` | Word-clock language: `en` or `ar` (Arabic, RTL) |
 | `PERSIST_FILE` | `/data/.state.json` | State file on the volume; `off` to disable |
+| `FLIP_SPEED` | `2` | Flip-animation speed (build-time): `1` = original, `2` = 2×. Rebuild to apply |
 
 Changing the mode/theme/sound from the **setup screen** (`http://<pi-ip>:8080/setup`)
 applies to all displays instantly and persists across restarts.
@@ -91,6 +96,9 @@ the flip animation, not the server.
   are fine. A Pi 4B handles the heavy animation noticeably better.
 - The client is built with `React.memo` on each tile to minimize re-renders, and
   [KIOSK.md](KIOSK.md) documents the Chromium GPU flags worth setting on the Pi.
+- **Tune the flip speed** for weaker hardware: set `FLIP_SPEED=1` in `.env`
+  (1 = original, 2 = default/2x) and rebuild. Slower flips are gentler on the
+  3B+ because there's less per-frame churn.
 
 ### Building on a Pi 3B+
 

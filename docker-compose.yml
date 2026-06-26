@@ -1,6 +1,11 @@
 services:
   split-flap:
-    build: .
+    build:
+      context: .
+      args:
+        # Flip-animation speed baked into the client at build time.
+        # 1 = original (gentlest on a Pi 3B+), 2 = default/2x. Rebuild to apply.
+        VITE_FLIP_SPEED: ${FLIP_SPEED:-2}
     container_name: split-flap
     restart: unless-stopped
     ports:

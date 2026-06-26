@@ -45,9 +45,10 @@ server):
 - **Full-board split-flap** transitions animate up to ~192 tiles at once and can
   stutter on the 3B+'s single Cortex-A53; the idle 5-second info-screen ticks
   are light. A **Pi 4B** handles the heavy animation noticeably better.
-- `FlipChar` is wrapped in `React.memo` to cut re-renders; flip timing lives in
-  `client/src/components/flipTiming.js` if you want to slow the animation back
-  down for weaker hardware (rebuild required).
+- `FlipChar` is wrapped in `React.memo` to cut re-renders. If full-board
+  animations feel too busy on the 3B+, **slow the flip down**: set `FLIP_SPEED=1`
+  in `.env` (1 = original speed, 2 = default/2x) and rebuild with
+  `docker compose up -d --build`.
 - Run **64-bit Raspberry Pi OS** for the smoothest Chromium + `arm64` image.
 
 ## Prevent the OS from sleeping / screensaver

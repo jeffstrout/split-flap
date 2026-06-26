@@ -132,6 +132,7 @@ doctl apps logs <app-id> api --type run
 | `PERSIST_FILE` | Server | State file path. On by default (`server/.state.json`); set to `off` to disable |
 | `CLIENT_DIST` | Server | Path to the built client to serve on the same port. Unset = static serving off (dev). Set to `/app/client/dist` in the Docker image |
 | `HOST_PORT` | Compose | Host port mapped to the container's 3001 (default: `8080`; used by `docker-compose.yml`) |
+| `FLIP_SPEED` | Compose (build arg) | Flip-animation speed baked into the client: `1` = original, `2` = default/2x. Passed as `VITE_FLIP_SPEED` to the Vite build; rebuild to apply |
 
 ### WebSocket in Production
 
@@ -312,7 +313,7 @@ chrome.exe --kiosk http://localhost:3000
 - `client/src/components/FlipBoard.jsx` - Board container + audio synthesis
 - `client/src/components/FlipRow.jsx` - Row of characters, maps text to FlipChar
 - `client/src/components/FlipChar.jsx` - Individual character flip animation
-- `client/src/components/flipTiming.js` - Flip animation timing (single source; 2x speed)
+- `client/src/components/flipTiming.js` - Flip animation timing (single source; speed via `VITE_FLIP_SPEED`, default 2x)
 - `client/src/hooks/useWebSocket.js` - Auto-reconnecting WebSocket hook
 - `client/src/styles/flip.css` - Styling, dimensions, animations, theme support
 
@@ -326,6 +327,7 @@ chrome.exe --kiosk http://localhost:3000
 ### Config & DevOps
 
 - `README.md` - Project overview + Docker / Raspberry Pi quick start
+- `PI-SETUP.md` - Fresh-OS Raspberry Pi 3B+ runbook (Docker, swap, kiosk autostart)
 - `Dockerfile` - Multi-stage single-container build (client build → slim runtime)
 - `docker-compose.yml` - One service, `restart: unless-stopped`, `/data` volume
 - `.dockerignore` - Keeps host `node_modules`/`dist`/state out of the image
