@@ -300,18 +300,22 @@ function generateTimeMessage() {
 
 // --- Split-flap info screen (issue #37) ----------------------------------
 // Bottom-left: day + month + date (left-justified). Bottom-right: 24h
-// HH:MM:SS (right-justified). Runs while in 'flip' mode, refreshing every 5s.
+// HH:MM:SS (right-justified). Runs while in 'flip' mode, refreshing every 10s.
 const DAY_ABBR = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const MONTH_ABBR = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
                     'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-const INFO_INTERVAL_MS = 5000;
+// Refresh cadence + displayed-seconds granularity. The info screen ticks every
+// INFO_STEP_S seconds, aligned to wall-clock multiples (…:00, :10, :20, …), and
+// the seconds field is floored to the same step so it advances cleanly.
+const INFO_STEP_S = 10;
+const INFO_INTERVAL_MS = INFO_STEP_S * 1000;
 
 function generateInfoMessage() {
   const now = new Date();
   const left = `${DAY_ABBR[now.getDay()]} ${MONTH_ABBR[now.getMonth()]} ${now.getDate()}`;
   const hh = String(now.getHours()).padStart(2, '0');
   const mm = String(now.getMinutes()).padStart(2, '0');
-  const ss = String(Math.floor(now.getSeconds() / 5) * 5).padStart(2, '0');
+  const ss = String(Math.floor(now.getSeconds() / INFO_STEP_S) * INFO_STEP_S).padStart(2, '0');
   const right = `${hh}:${mm}:${ss}`;
 
   const gap = Math.max(1, COLS - left.length - right.length);
@@ -334,13 +338,13 @@ export function startInfoScreen() {
     broadcast({ type: 'message', data: state.currentMessage });
   };
 
-  update(); // show immediately (seconds already floored to a multiple of 5)
+  update(); // show immediately (seconds already floored to a multiple of INFO_STEP_S)
 
-  // Align the recurring refresh to the next wall-clock 5-second boundary so the
-  // displayed seconds advance cleanly 00 -> 05 -> 10 ...
+  // Align the recurring refresh to the next wall-clock INFO_STEP_S boundary so
+  // the displayed seconds advance cleanly 00 -> 10 -> 20 ...
   const now = new Date();
   const msToNextBoundary =
-    INFO_INTERVAL_MS - (now.getSeconds() % 5) * 1000 - now.getMilliseconds();
+    INFO_INTERVAL_MS - (now.getSeconds() % INFO_STEP_S) * 1000 - now.getMilliseconds();
   state.infoTimeout = setTimeout(() => {
     update();
     state.infoInterval = setInterval(update, INFO_INTERVAL_MS);

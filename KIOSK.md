@@ -2,14 +2,18 @@
 
 How to run the display full-screen on a wall-mounted monitor (FR-35–FR-37).
 
+> **Port:** the single Docker container serves on **8080** by default
+> (`http://<host>:8080`). Local non-Docker dev serves on **3000**. Adjust the
+> URLs below to match how you're running it.
+
 ## Launch full-screen
 
 ```bash
 # macOS
-open -a "Google Chrome" --args --kiosk --app=http://<host>:3000
+open -a "Google Chrome" --args --kiosk --app=http://<host>:8080
 
 # Linux (Chromium)
-chromium-browser --kiosk --app=http://<host>:3000 \
+chromium-browser --kiosk --app=http://<host>:8080 \
   --noerrdialogs --disable-infobars --incognito
 ```
 
@@ -18,6 +22,44 @@ The app already:
 - hides the mouse cursor (`cursor: none`);
 - requests a **Screen Wake Lock** to keep the monitor awake while visible;
 - auto-reconnects to the server and re-syncs state (message, settings, mode).
+
+## Raspberry Pi (HDMI display)
+
+The Pi is both the server and the display. On **Raspberry Pi OS Lite** (no
+desktop) the verified setup is **cage** (a minimal Wayland kiosk compositor) +
+Chromium, launched from a console auto-login. Full step-by-step:
+[PI-SETUP.md](PI-SETUP.md#5-make-the-pi-the-display-chromium-kiosk-on-hdmi).
+
+```bash
+# On the Pi (Raspberry Pi OS Lite):
+sudo apt install -y cage chromium
+
+# Launch fullscreen on the HDMI console. --disable-gpu is REQUIRED on the 3B+:
+# its VideoCore IV GPU can't give Chromium a working GL ES context under Wayland
+# (hardware GL black-screens), so render in software.
+cage -- chromium --kiosk --ozone-platform=wayland \
+  --noerrdialogs --disable-infobars --incognito \
+  --disable-gpu --disable-gpu-compositing --test-type \
+  http://localhost:8080
+```
+
+> ⚠️ Do **not** use `--enable-gpu-rasterization --ignore-gpu-blocklist` on the
+> 3B+ — forcing the hardware GPU path makes Chromium's GPU process crash and the
+> screen stays black. Software rendering (`--disable-gpu`) is correct here; the
+> board is mostly CSS, so it renders fine.
+
+Performance notes for the **Pi 3B+** (rendering is the bottleneck, not the
+server, and it's software-rendered here):
+
+- The **word-clock modes** (`qlock`) have no flip animation and run smoothly.
+- **Full-board split-flap** transitions animate up to ~192 tiles at once and can
+  stutter on the 3B+'s single Cortex-A53; the idle info-screen ticks are light.
+  A **Pi 4B** handles the heavy animation noticeably better.
+- `FlipChar` is wrapped in `React.memo` to cut re-renders. If full-board
+  animations feel too busy, **slow the flip down**: set `FLIP_SPEED=1` in `.env`
+  (1 = original speed, 2 = default/2x) and rebuild with
+  `docker compose up -d --build`.
+- Run **64-bit Raspberry Pi OS** for the smoothest `arm64` image.
 
 ## Prevent the OS from sleeping / screensaver
 
@@ -43,8 +85,8 @@ Add the kiosk launch command to the OS autostart (macOS Login Items /
 Mode is API-controlled (all displays switch together):
 
 ```bash
-curl -X POST http://<host>:3000/api/mode/qlock   # word clock
-curl -X POST http://<host>:3000/api/mode/flip    # split-flap board
+curl -X POST http://<host>:8080/api/mode/qlock   # word clock
+curl -X POST http://<host>:8080/api/mode/flip    # split-flap board
 ```
 
 ## Burn-in mitigation (OLED/plasma only)
