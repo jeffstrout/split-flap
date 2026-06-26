@@ -43,6 +43,12 @@ cage -- chromium --kiosk --ozone-platform=wayland \
   http://localhost:8080
 ```
 
+> The boot-time autostart launcher in [PI-SETUP.md](PI-SETUP.md#5-make-the-pi-the-display-chromium-kiosk-on-hdmi)
+> wraps this with `until curl -sf .../api/health; do sleep 2; done` so a cold
+> boot waits for the container's web server before opening Chromium — otherwise
+> the browser can beat the server and land on an error page. (Not needed for the
+> manual launch above, where the server is already running.)
+
 > ⚠️ Do **not** use `--enable-gpu-rasterization --ignore-gpu-blocklist` on the
 > 3B+ — forcing the hardware GPU path makes Chromium's GPU process crash and the
 > screen stays black. Software rendering (`--disable-gpu`) is correct here; the

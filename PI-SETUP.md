@@ -145,10 +145,17 @@ VideoCore IV GPU can't give Chromium a working GL ES context under Wayland
 (it black-screens with hardware GL), so we render in software — fine for this
 mostly-CSS board:
 
+The `until` line waits for the container's web server before launching the
+browser — important on a cold boot, where Docker + Node take 10–30 s to come up
+and Chromium would otherwise land on a "can't reach this page" error and not
+retry:
+
 ```bash
 cat >> ~/.bash_profile <<'EOF'
 # Split-Flap kiosk: on the HDMI console (tty1) only, run the board fullscreen
 if [ "$(tty)" = "/dev/tty1" ]; then
+  # Wait for the container's web server so a cold boot doesn't land on an error page
+  until curl -sf http://localhost:8080/api/health >/dev/null 2>&1; do sleep 2; done
   exec cage -- chromium --kiosk --ozone-platform=wayland \
     --noerrdialogs --disable-infobars --incognito \
     --disable-gpu --disable-gpu-compositing --test-type \
@@ -162,10 +169,24 @@ sudo reboot
 > If `ls` in step (a) showed the binary is `chromium-browser` rather than
 > `chromium`, use that name in the `exec` line instead.
 
-On boot the Pi auto-logs into the console, the container is already running
-(`restart: unless-stopped`), and cage launches Chromium fullscreen on the HDMI
-display. If cage exits, the login re-runs and relaunches it automatically.
-Chromium's output (GPU/Wayland messages) goes to `~/cage.log` for debugging.
+On boot the Pi auto-logs into the console, the container auto-starts
+(`restart: unless-stopped`), the launcher waits for the server, then cage opens
+Chromium fullscreen on the HDMI display. If cage exits, the login re-runs and
+relaunches it automatically. Chromium's output (GPU/Wayland messages) goes to
+`~/cage.log` for debugging.
+
+### Power-loss recovery
+
+The display is fully unattended: pull the power and reapply it, and the Pi boots,
+Docker auto-starts the container (`restart: unless-stopped`), the console
+auto-logs in, and the kiosk waits for the server and opens the board — no
+keyboard or manual step. Confirm Docker is set to start at boot once:
+
+```bash
+systemctl is-enabled docker        # should print "enabled"
+```
+
+The surest test is to actually power-cycle it and watch it come back to the board.
 
 ---
 
