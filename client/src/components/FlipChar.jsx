@@ -106,4 +106,8 @@ function FlipChar({ char, delay = 0, onFlip }) {
   );
 }
 
-export default FlipChar;
+// Memoized: the board has up to ROWS×COLS of these, and Display re-renders on
+// every settings WebSocket message. onFlip is a stable useCallback and
+// char/delay are deterministic, so memo skips re-renders unless this tile's
+// own props change — a meaningful win on low-power hardware (e.g. Pi 3B+).
+export default React.memo(FlipChar);

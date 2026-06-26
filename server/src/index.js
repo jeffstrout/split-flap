@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
+import path from 'path';
 import messagesRouter, { startInfoScreen } from './routes/messages.js';
 import { ROWS, COLS } from './config.js';
 import { loadPersisted, startPersistence } from './persistence.js';
@@ -71,6 +72,26 @@ if (state.mode === 'flip') startInfoScreen();
 
 // Routes
 app.use('/api', messagesRouter);
+
+// Serve the built client from a single container (Docker / Raspberry Pi).
+// CLIENT_DIST points at the Vite build output; when unset (local dev) Vite
+// serves the client on :3000 and this block is skipped. The WebSocket shares
+// this same HTTP server/port, so in production the UI, REST API, and WebSocket
+// all run on one port.
+const clientDist = process.env.CLIENT_DIST
+  ? path.resolve(process.env.CLIENT_DIST)
+  : null;
+if (clientDist) {
+  const indexHtml = path.join(clientDist, 'index.html');
+  app.use(express.static(clientDist));
+  // SPA fallback: serve index.html for any non-API GET so client-side routes
+  // (e.g. /setup) survive a refresh. /api requests fall through to the 404
+  // from the router above; WebSocket upgrades bypass Express entirely.
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(indexHtml);
+  });
+}
 
 // Create HTTP server
 const server = createServer(app);

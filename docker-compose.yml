@@ -1,0 +1,18 @@
+services:
+  split-flap:
+    build: .
+    container_name: split-flap
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-8080}:3001"   # display + API -> http://<pi-ip>:8080
+    environment:
+      # All optional — these fall back to the app's built-in defaults.
+      # Override by creating a .env file (see .env.example).
+      DEFAULT_MODE: ${DEFAULT_MODE:-qlock}        # qlock | flip
+      DEFAULT_QLOCK_LANG: ${DEFAULT_QLOCK_LANG:-en}  # en | ar
+      PERSIST_FILE: ${PERSIST_FILE:-/data/.state.json}  # "off" to disable
+    volumes:
+      - split-flap-data:/data       # persisted state survives rebuilds/reboots
+
+volumes:
+  split-flap-data:

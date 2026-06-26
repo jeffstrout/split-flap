@@ -1,0 +1,24 @@
+# Never copy host build artifacts or deps into the image — they're rebuilt
+# inside, and copying them busts the layer cache and can break native modules
+# (host arch != Pi arch).
+**/node_modules
+**/dist
+
+# Local state / env
+.env
+**/.state.json
+.state.json
+
+# VCS, CI, docs that don't belong in the image
+.git
+.github
+.do
+.claude
+logs
+*.log
+*.md
+
+# OS / editor cruft
+.DS_Store
+.vscode
+.idea

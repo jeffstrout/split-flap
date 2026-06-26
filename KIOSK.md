@@ -2,14 +2,18 @@
 
 How to run the display full-screen on a wall-mounted monitor (FR-35–FR-37).
 
+> **Port:** the single Docker container serves on **8080** by default
+> (`http://<host>:8080`). Local non-Docker dev serves on **3000**. Adjust the
+> URLs below to match how you're running it.
+
 ## Launch full-screen
 
 ```bash
 # macOS
-open -a "Google Chrome" --args --kiosk --app=http://<host>:3000
+open -a "Google Chrome" --args --kiosk --app=http://<host>:8080
 
 # Linux (Chromium)
-chromium-browser --kiosk --app=http://<host>:3000 \
+chromium-browser --kiosk --app=http://<host>:8080 \
   --noerrdialogs --disable-infobars --incognito
 ```
 
@@ -18,6 +22,33 @@ The app already:
 - hides the mouse cursor (`cursor: none`);
 - requests a **Screen Wake Lock** to keep the monitor awake while visible;
 - auto-reconnects to the server and re-syncs state (message, settings, mode).
+
+## Raspberry Pi (HDMI display)
+
+Run the container (see `README.md`), then point the Pi's own browser at it. The
+Pi is both the server and the display.
+
+```bash
+# Raspberry Pi OS — Chromium kiosk pointing at the local container.
+# The GPU flags matter on the Pi 3B+: they force hardware-accelerated
+# compositing for the flip animation instead of slower software rendering.
+chromium-browser --kiosk --app=http://localhost:8080 \
+  --noerrdialogs --disable-infobars --incognito \
+  --enable-gpu-rasterization --ignore-gpu-blocklist \
+  --enable-zero-copy --disable-features=Translate
+```
+
+Performance notes for the **Pi 3B+** (the display is the bottleneck, not the
+server):
+
+- The **word-clock modes** (`qlock`) have no flip animation and run smoothly.
+- **Full-board split-flap** transitions animate up to ~192 tiles at once and can
+  stutter on the 3B+'s single Cortex-A53; the idle 5-second info-screen ticks
+  are light. A **Pi 4B** handles the heavy animation noticeably better.
+- `FlipChar` is wrapped in `React.memo` to cut re-renders; flip timing lives in
+  `client/src/components/flipTiming.js` if you want to slow the animation back
+  down for weaker hardware (rebuild required).
+- Run **64-bit Raspberry Pi OS** for the smoothest Chromium + `arm64` image.
 
 ## Prevent the OS from sleeping / screensaver
 
@@ -43,8 +74,8 @@ Add the kiosk launch command to the OS autostart (macOS Login Items /
 Mode is API-controlled (all displays switch together):
 
 ```bash
-curl -X POST http://<host>:3000/api/mode/qlock   # word clock
-curl -X POST http://<host>:3000/api/mode/flip    # split-flap board
+curl -X POST http://<host>:8080/api/mode/qlock   # word clock
+curl -X POST http://<host>:8080/api/mode/flip    # split-flap board
 ```
 
 ## Burn-in mitigation (OLED/plasma only)

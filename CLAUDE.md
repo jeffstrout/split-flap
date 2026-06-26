@@ -6,7 +6,8 @@ A retro split-flap display web application with real-time updates via WebSocket.
 
 - **Client**: React + Vite (port 3000)
 - **Server**: Node.js + Express + WebSocket (port 3001)
-- **Deployment**: DigitalOcean App Platform
+- **Deployment**: single Docker container (Raspberry Pi / self-hosted) or
+  DigitalOcean App Platform
 - **Font**: Google Fonts — Roboto Condensed 700 (loaded in `client/index.html`)
 
 ## Display Modes & Setup
@@ -73,6 +74,36 @@ gh pr create --title "My change" --body "Description"
 
 ## Deployment
 
+There are two deployment paths: a **single Docker container** (Raspberry Pi /
+self-hosted, recommended for a wall display) and **DigitalOcean App Platform**
+(cloud, two components).
+
+### Docker (single container — Raspberry Pi / self-hosted)
+
+One container runs everything. The multi-stage `Dockerfile` builds the React
+client (stage 1), then produces a slim runtime image where **Express serves the
+static client, the REST API, and the WebSocket all on one port** (3001 inside
+the container, mapped to host `8080` by default). Recommended for an
+HDMI-attached Pi display. Full guide: `README.md`.
+
+```bash
+cp .env.example .env          # optional — defaults work as-is
+docker compose up -d --build  # build + run; restart: unless-stopped
+# open http://<host>:8080  (and /setup to configure)
+```
+
+- **Single port**: the WebSocket shares the HTTP server (`new WebSocketServer({ server })`)
+  and is path-agnostic, so the client's production URL `ws(s)://<host>/api`
+  works unchanged on one port — no separate routing needed, no client change.
+- **Static serving**: active only when `CLIENT_DIST` is set (the Dockerfile sets
+  it to `/app/client/dist`); unset in local dev, where Vite serves the client on
+  :3000. A SPA fallback serves `index.html` for non-`/api` GETs so `/setup`
+  survives a refresh. (`server/src/index.js`)
+- **Persistence**: state is written to `/data/.state.json` on the
+  `split-flap-data` volume, surviving rebuilds and reboots.
+- **Build host**: build on a capable machine (Mac/CI), not on a Pi 3B+ (the Vite
+  build is memory-hungry). The image is multi-arch (`arm64`).
+
 ### DigitalOcean App Platform
 
 Configuration is in `.do/app.yaml`. Manual deploys only (`deploy_on_push: false`).
@@ -99,12 +130,16 @@ doctl apps logs <app-id> api --type run
 | `DEFAULT_MODE` | Server | Boot mode `flip`\|`qlock` (default: `qlock`) |
 | `DEFAULT_QLOCK_LANG` | Server | Boot word-clock language `en`\|`ar` (default: `en`) |
 | `PERSIST_FILE` | Server | State file path. On by default (`server/.state.json`); set to `off` to disable |
+| `CLIENT_DIST` | Server | Path to the built client to serve on the same port. Unset = static serving off (dev). Set to `/app/client/dist` in the Docker image |
+| `HOST_PORT` | Compose | Host port mapped to the container's 3001 (default: `8080`; used by `docker-compose.yml`) |
 
 ### WebSocket in Production
 
 The client auto-detects the WebSocket URL:
 - **Dev**: `ws://localhost:3001` (direct connection)
-- **Production**: `wss://<host>/api` (routed through DO App Platform)
+- **Production**: `wss://<host>/api` — routed through DO App Platform, or, in the
+  single Docker container, handled directly by the path-agnostic WebSocket
+  server on the same port. The same client URL works for both.
 
 No configuration needed — derived from `window.location` at runtime.
 
@@ -290,10 +325,16 @@ chrome.exe --kiosk http://localhost:3000
 
 ### Config & DevOps
 
+- `README.md` - Project overview + Docker / Raspberry Pi quick start
+- `Dockerfile` - Multi-stage single-container build (client build → slim runtime)
+- `docker-compose.yml` - One service, `restart: unless-stopped`, `/data` volume
+- `.dockerignore` - Keeps host `node_modules`/`dist`/state out of the image
+- `.env.example` - Optional Docker config overrides (copy to `.env`)
 - `.do/app.yaml` - DigitalOcean App Platform deployment spec
 - `.gitignore` - Git ignore rules (node_modules, dist, logs, .env, IDE files)
 - `.mcp.json` - GitHub MCP server config for Claude Code
 - `start.sh` / `stop.sh` / `status.sh` - Local development scripts
+- `KIOSK.md` - Wall-mounted kiosk / HDMI display setup (incl. Pi Chromium flags)
 
 ## Claude Code
 
@@ -344,7 +385,7 @@ Edits on `main` are blocked by a PreToolUse hook. Always work on a feature branc
 - [x] Add input validation for message lines (check array element types, length limits)
 - [ ] Add exponential backoff to WebSocket reconnect (currently retries every 3s forever)
 - [x] Extract shared ROWS/COLS constants (now `server/src/config.js` + `@board` alias)
-- [ ] Add `React.memo` to FlipChar to prevent unnecessary re-renders
+- [x] Add `React.memo` to FlipChar to prevent unnecessary re-renders
 
 ### Features
 - [x] Add UI controls for sound/theme toggle (`Controls.jsx`, plus `/setup`)
