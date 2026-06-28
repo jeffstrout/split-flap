@@ -102,6 +102,23 @@ function Setup() {
     return () => clearInterval(id);
   }, []);
 
+  // The kiosk shell locks scrolling + centers content globally for the wall
+  // display (`body { overflow: hidden; display: flex; ... }` in index.html). That
+  // clips this taller config page (issue #54), so relax the body while /setup is
+  // mounted and restore it on unmount. Setup only renders on /setup, so the live
+  // display (/) is never affected.
+  useEffect(() => {
+    const b = document.body.style;
+    const prev = {
+      overflow: b.overflow, display: b.display, height: b.height, alignItems: b.alignItems,
+    };
+    b.overflow = 'auto';
+    b.display = 'block';
+    b.height = 'auto';
+    b.alignItems = 'flex-start';
+    return () => { Object.assign(b, prev); };
+  }, []);
+
   const chooseDisplayMode = useCallback(async (id) => {
     setSaving(true);
     try {
