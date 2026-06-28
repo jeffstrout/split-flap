@@ -27,10 +27,19 @@ screen or the API. Each composes the server's `mode` + `qlockLanguage` settings:
   (`00, 10, 20, …`). It runs automatically while in flip mode; a
   custom `POST /api/message` shows until the next tick, and starting the legacy
   minute clock (`/api/clock/start`) takes over.
+- The **top 7 rows** rotate through up to **6 pushable "screens"** (issue #48).
+  External processes push content to a slot (`POST /api/screens/<1-6>`); the
+  board cycles through only the slots that hold non-expired data, **15 seconds
+  each**, ascending, looping. Pushed data **expires 15 minutes** after its last
+  push (each push resets the timer) and drops out of the rotation. The bottom
+  date/time line stays pinned. Pushes/expiries take effect at the next rotation
+  tick. Screen content is transient and **not persisted** across restarts.
 - **Display**: `/` — the live wall display (kiosk).
 - **Setup**: `/setup` (e.g. `http://localhost:3000/setup`) — pick the mode,
-  theme, and flip sound. Changes apply to all displays instantly via WebSocket
-  and are persisted across restarts (see Persistence below).
+  theme, and flip sound, and see a live, **view-only preview of all 6 screen
+  slots** (with per-slot expiry countdown and Clear). Changes apply to all
+  displays instantly via WebSocket and are persisted across restarts (see
+  Persistence below).
 
 ## Running the Application
 
@@ -156,6 +165,29 @@ No configuration needed — derived from `window.location` at runtime.
 | `GET` | `/api/message` | Get current message |
 | `GET` | `/api/status` | Check connection status |
 
+### Rotating Screens (issue #48)
+
+Up to 6 slots (`1`–`6`) rotate in the top 7 rows during flip mode; each slot's
+data expires 15 minutes after its last push.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/screens/:slot` | Push `{ lines, align }` to slot 1–6; resets its 15-min TTL |
+| `GET` | `/api/screens` | All slots: content, `align`, `expiresAt`, `secondsRemaining` |
+| `GET` | `/api/screens/:slot` | One slot's content + remaining TTL |
+| `DELETE` | `/api/screens/:slot` | Clear one slot |
+| `DELETE` | `/api/screens` | Clear all slots |
+
+`lines` is an array of ≤ 7 strings (the bottom row is reserved for the
+date/time line); each is uppercased and padded/truncated to 24 chars with the
+same rules as `/api/message`. Example push from another machine:
+
+```bash
+curl -X POST http://<host>:8080/api/screens/3 \
+  -H 'Content-Type: application/json' \
+  -d '{"lines":["SERVER A","CPU 42%","MEM 71%"],"align":"center"}'
+```
+
 ### Clock
 
 | Method | Endpoint | Description |
@@ -263,6 +295,25 @@ Each line is exactly 24 characters, padded with spaces. Always 8 lines.
 
 Sent on connect and whenever sound, theme, mode, or word-clock language changes.
 
+### `screens` — Rotating-screen slots (issue #48)
+
+```json
+{
+  "type": "screens",
+  "data": {
+    "slots": [
+      { "slot": 1, "lines": ["...24 chars...", "..."], "align": "left", "expiresAt": 1750000000000, "secondsRemaining": 842 },
+      { "slot": 2, "lines": null, "align": "left", "expiresAt": null, "secondsRemaining": null }
+    ]
+  }
+}
+```
+
+Always 6 slots. `lines: null` (and `expiresAt: null`) marks an empty slot;
+populated slots carry their formatted 7-row content. Sent on connect and on every
+slot push, clear, or expiry. The display board (`/`) ignores this type and keeps
+rendering `message`; `/setup` uses it to render the live slot previews.
+
 ## Configuration
 
 Board dimensions have a single source of truth: `server/src/config.js`
@@ -307,7 +358,7 @@ chrome.exe --kiosk http://localhost:3000
 - `client/src/main.jsx` - React entry point
 - `client/src/App.jsx` - Path router (`/` display, `/setup` config)
 - `client/src/Display.jsx` - Live display: WebSocket state + active-mode render
-- `client/src/Setup.jsx` - Setup/config screen (mode, theme, sound)
+- `client/src/Setup.jsx` - Setup/config screen (mode, theme, sound) + live view-only previews of the 6 rotating-screen slots
 - `client/src/components/QlockTwo.jsx` - QLOCKTWO word clock (EN/AR, RTL)
 - `client/src/components/Controls.jsx` - On-screen sound/theme controls
 - `client/src/qlock/` - Word-clock matrices (`lang/en.js`, `lang/ar.js`) + `timeToWords.js`
@@ -321,7 +372,7 @@ chrome.exe --kiosk http://localhost:3000
 ### Server
 
 - `server/src/index.js` - Express server, WebSocket setup, CORS, state, persistence wiring
-- `server/src/routes/messages.js` - API endpoints (message, clock, sound, theme, mode, language, settings, health)
+- `server/src/routes/messages.js` - API endpoints (message, screens, clock, sound, theme, mode, language, settings, health) + flip-mode info screen & screen rotation
 - `server/src/config.js` - Single source of truth for board dimensions
 - `server/src/persistence.js` - State persistence (on by default)
 

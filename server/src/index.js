@@ -3,7 +3,7 @@ import cors from 'cors';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import path from 'path';
-import messagesRouter, { startInfoScreen } from './routes/messages.js';
+import messagesRouter, { startInfoScreen, screensPayload } from './routes/messages.js';
 import { ROWS, COLS } from './config.js';
 import { loadPersisted, startPersistence } from './persistence.js';
 
@@ -50,6 +50,12 @@ export const state = {
   clockTimeout: null,
   infoInterval: null,
   infoTimeout: null,
+  // Rotating info screens (issue #48): up to 6 slots, each
+  // { lines: string[7], align, expiresAt } or null. Transient by design
+  // (15-min TTL) — not persisted. currentSlot is the slot on screen now.
+  screens: Array(6).fill(null),
+  currentSlot: null,
+  rotateInterval: null,
   soundEnabled: true,
   theme: 'dark', // 'dark' = black bg/white text, 'light' = white bg/black text
   mode: DEFAULT_MODE, // 'flip' = split-flap board, 'qlock' = QLOCKTWO word clock
@@ -117,6 +123,8 @@ wss.on('connection', (ws) => {
       qlockLanguage: state.qlockLanguage
     }
   }));
+  // Current rotating-screen slots, so /setup can render its previews on load.
+  ws.send(JSON.stringify({ type: 'screens', data: screensPayload() }));
 
   ws.on('close', () => {
     console.log('Client disconnected');

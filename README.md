@@ -149,6 +149,24 @@ curl -X POST http://<pi-ip>:8080/api/message \
 curl http://<pi-ip>:8080/api/health                    # liveness probe
 ```
 
+### Rotating info screens
+
+In Info Split-Flap mode the board rotates through up to **6 pushable screens**
+(15s each) in the top rows, with the date/time line pinned to the bottom. Any
+process on any machine can publish to a slot (`1`–`6`); a slot's content expires
+**15 minutes** after its last push and drops out of the rotation. The setup
+screen (`/setup`) shows a live, view-only preview of all 6 slots.
+
+```bash
+# Push to slot 3 (up to 7 lines; uppercased, padded to 24 chars)
+curl -X POST http://<pi-ip>:8080/api/screens/3 \
+  -H 'Content-Type: application/json' \
+  -d '{"lines":["SERVER A","CPU 42%","MEM 71%"],"align":"center"}'
+
+curl http://<pi-ip>:8080/api/screens                   # inspect all slots + TTLs
+curl -X DELETE http://<pi-ip>:8080/api/screens/3       # clear one slot
+```
+
 ---
 
 ## Local development (without Docker)
