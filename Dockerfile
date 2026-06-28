@@ -34,6 +34,18 @@ RUN cd client && npm run build      # → /build/client/dist
 FROM node:20-bookworm-slim AS runtime
 WORKDIR /app
 
+# Build provenance baked into the image so the running app can report which
+# version it is (GET /api/version, shown on /setup). CI passes these on every
+# push to main; they default to "dev"/"unknown" for local builds.
+ARG GIT_SHA=dev
+ARG BUILD_TIME=unknown
+ENV APP_COMMIT=$GIT_SHA
+ENV APP_BUILD_TIME=$BUILD_TIME
+# Standard OCI labels (also used by docker/metadata-action in CI).
+LABEL org.opencontainers.image.source="https://github.com/jeffstrout/split-flap" \
+      org.opencontainers.image.revision="$GIT_SHA" \
+      org.opencontainers.image.created="$BUILD_TIME"
+
 # tzdata so the info-screen clock can honor a local timezone via the TZ env var
 # (the slim base image only knows UTC). Set TZ in docker-compose / .env.
 RUN apt-get update && apt-get install -y --no-install-recommends tzdata \

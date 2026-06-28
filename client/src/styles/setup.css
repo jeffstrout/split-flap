@@ -59,3 +59,7 @@
 .setup-toggle button.active { opacity: 1; background: color-mix(in srgb, currentColor 16%, transparent); }
 
 .setup-note { margin-top: 32px; font-size: 14px; opacity: 0.55; }
+.setup-version {
+  margin-top: 8px; font-size: 12px; opacity: 0.4;
+  font-variant-numeric: tabular-nums; word-break: break-all;
+}
