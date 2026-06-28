@@ -21,6 +21,7 @@ function selectedFrom({ mode, qlockLanguage }) {
 function Setup() {
   const [settings, setSettings] = useState(null); // { mode, qlockLanguage, theme, soundEnabled }
   const [saving, setSaving] = useState(false);
+  const [version, setVersion] = useState(null); // { version, commit, builtAt }
 
   const wsUrl = import.meta.env.DEV
     ? 'ws://localhost:3001'
@@ -33,6 +34,11 @@ function Setup() {
       .then((r) => r.json())
       .then(setSettings)
       .catch(() => setSettings({ mode: 'qlock', qlockLanguage: 'en', theme: 'dark', soundEnabled: true }));
+    // Which build is running — handy for confirming an auto-update landed (#50).
+    fetch('/api/version')
+      .then((r) => r.json())
+      .then(setVersion)
+      .catch(() => setVersion(null));
   }, []);
 
   // Reflect changes made from anywhere (other devices, the display) live.
@@ -111,6 +117,12 @@ function Setup() {
         </section>
 
         <p className="setup-note">Changes apply to all displays instantly and are saved across restarts.</p>
+        {version && (
+          <p className="setup-version">
+            running {version.commit}
+            {version.builtAt && version.builtAt !== 'unknown' ? ` · built ${version.builtAt}` : ''}
+          </p>
+        )}
       </div>
     </div>
   );
