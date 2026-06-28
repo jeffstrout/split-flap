@@ -7,6 +7,12 @@
   padding: 6vh 16px;
   box-sizing: border-box;
   font-family: 'Roboto Condensed', system-ui, sans-serif;
+  /* Always show a pointer here (issue #52). The kiosk shell hides the cursor
+     globally (`body { cursor: none }` in index.html) for the wall display; this
+     interactive config screen must override that. The .setup element's own
+     cursor wins over the inherited body rule, so the pointer is visible across
+     the whole page (buttons keep their own `cursor: pointer`). */
+  cursor: auto;
 }
 .setup.theme-dark { background: #0a0a0a; color: #f2f2f2; }
 .setup.theme-light { background: #f4f4f4; color: #111; }

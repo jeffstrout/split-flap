@@ -29,6 +29,9 @@ export default function Controls({ soundEnabled, theme }) {
       window.removeEventListener('keydown', reveal);
       window.removeEventListener('touchstart', reveal);
       if (hideTimer.current) clearTimeout(hideTimer.current);
+      // Don't let the kiosk's hidden-cursor state leak to other views/routes
+      // (e.g. back/forward navigation to /setup). Reset to the CSS default.
+      document.body.style.cursor = '';
     };
   }, []);
 
