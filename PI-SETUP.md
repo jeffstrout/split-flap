@@ -223,6 +223,7 @@ volume and survive reboots and updates — only `down -v` clears them.
 |---------|-----|
 | Build killed / out-of-memory | Only when building on the Pi: confirm swap is active (`free -h`); redo step 2. Or just pull the prebuilt image |
 | Display didn't auto-update | Check `docker compose logs watchtower`; force it with `docker compose pull && docker compose up -d`; confirm the running build at `/api/version` |
+| Watchtower logs `client version 1.25 is too old. Minimum supported API version is 1.40` | Docker API mismatch — ensure `DOCKER_API_VERSION` is set on the `watchtower` service (it is in the current `docker-compose.yml`); `git pull` then `docker compose up -d` to recreate it |
 | `docker: permission denied` | You skipped the reboot in step 1 (`usermod -aG docker`) |
 | Page unreachable from another device | Use the Pi's IP; check `docker compose ps` shows it `Up` |
 | Animation stutters on full-board changes | Build locally with `FLIP_SPEED=1` (see step 4 note) |
