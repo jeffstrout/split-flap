@@ -58,6 +58,69 @@
 }
 .setup-toggle button.active { opacity: 1; background: color-mix(in srgb, currentColor 16%, transparent); }
 
+/* Rotating screens preview (issue #48). */
+.setup-screens-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+}
+.setup-clear-all {
+  background: transparent; color: inherit; border: 1px solid currentColor;
+  border-radius: 8px; padding: 4px 12px; font: inherit; font-size: 13px;
+  font-weight: 700; cursor: pointer; opacity: 0.6;
+}
+.setup-clear-all:hover { opacity: 1; }
+
+.setup-screens-hint { font-size: 13px; opacity: 0.6; margin: 0 0 16px; line-height: 1.55; }
+.setup-screens-hint code {
+  font-size: 12px; background: color-mix(in srgb, currentColor 12%, transparent);
+  padding: 1px 5px; border-radius: 4px;
+}
+
+.setup-screens {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 18px;
+}
+.setup-screen { display: flex; flex-direction: column; gap: 8px; }
+.setup-screen.empty { opacity: 0.6; }
+
+.setup-screen-meta { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.setup-screen-slot { font-weight: 700; letter-spacing: 0.04em; }
+.setup-screen-ttl { opacity: 0.7; font-variant-numeric: tabular-nums; }
+.setup-screen-ttl.muted { opacity: 0.45; }
+.setup-screen-clear {
+  margin-left: auto; background: transparent; color: inherit;
+  border: 1px solid currentColor; border-radius: 6px; padding: 2px 10px;
+  font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; opacity: 0.55;
+}
+.setup-screen-clear:hover { opacity: 1; }
+
+/* A faithful fixed-tile grid: every cell is a tile (spaces included), so the
+   blank tiles read black (dark) / white (light) exactly like the wall board. */
+.screen-grid {
+  container-type: inline-size;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), 1fr);
+  gap: 1px;
+  padding: 6px;
+  border-radius: 6px;
+}
+.screen-tile {
+  aspect-ratio: 3 / 4;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
+  font-weight: 700;
+  font-size: 2.4cqw;
+  line-height: 1;
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+/* Tile + blank colors mirror the live display (flip.css). */
+.setup.theme-dark .screen-grid { background: #0d0d0d; }
+.setup.theme-dark .screen-tile { background: #1a1a1a; color: #f0f0f0; }
+.setup.theme-light .screen-grid { background: #f5f5f5; }
+.setup.theme-light .screen-tile { background: #e8e8e8; color: #1a1a1a; }
+
 .setup-note { margin-top: 32px; font-size: 14px; opacity: 0.55; }
 .setup-version {
   margin-top: 8px; font-size: 12px; opacity: 0.4;

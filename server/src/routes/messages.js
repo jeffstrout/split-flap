@@ -23,9 +23,11 @@ function broadcastSettings() {
 
 // Helper to pad/truncate lines to fit board dimensions.
 // align: 'left' (default) right-pads; 'center' centers within COLS.
-function formatMessage(lines, align = 'left') {
+// rows: how many rows to emit (defaults to the full board; rotating screens
+// pass ROWS-1 because the bottom row is reserved for the date/time line).
+function formatMessage(lines, align = 'left', rows = ROWS) {
   const formatted = [];
-  for (let i = 0; i < ROWS; i++) {
+  for (let i = 0; i < rows; i++) {
     const raw = (lines[i] || '').toUpperCase().substring(0, COLS);
     if (align === 'center') {
       const leftPad = Math.floor((COLS - raw.length) / 2);
@@ -313,19 +315,30 @@ function generateTimeMessage() {
   });
 }
 
-// --- Split-flap info screen (issue #37) ----------------------------------
-// Bottom-left: day + month + date (left-justified). Bottom-right: 24h
-// HH:MM:SS (right-justified). Runs while in 'flip' mode, refreshing every 10s.
+// --- Split-flap info screen + rotating screens (issues #37, #48) -----------
+// In flip mode the bottom row always shows the date/time (bottom-left: day +
+// month + date, left-justified; bottom-right: 24h HH:MM:SS, right-justified),
+// refreshing every INFO_STEP_S seconds. The top ROWS-1 rows rotate through up to
+// SLOT_COUNT pushed "screens" (issue #48), one every ROTATE_INTERVAL_MS, showing
+// only slots that currently hold non-expired content. Each push resets that
+// slot's 15-minute TTL; expired slots drop out of the rotation.
 const DAY_ABBR = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const MONTH_ABBR = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
                     'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-// Refresh cadence + displayed-seconds granularity. The info screen ticks every
+// Refresh cadence + displayed-seconds granularity. The bottom row ticks every
 // INFO_STEP_S seconds, aligned to wall-clock multiples (…:00, :10, :20, …), and
 // the seconds field is floored to the same step so it advances cleanly.
 const INFO_STEP_S = 10;
 const INFO_INTERVAL_MS = INFO_STEP_S * 1000;
 
-function generateInfoMessage() {
+// Rotating screens (issue #48).
+export const SLOT_COUNT = 6;              // addressable slots 1..6
+const CONTENT_ROWS = ROWS - 1;            // top rows available to a screen (7)
+const SCREEN_TTL_MS = 15 * 60 * 1000;     // 15 minutes; reset on every push
+const ROTATE_INTERVAL_MS = 15 * 1000;     // each screen is shown for 15s
+
+// The reserved bottom date/time row.
+function generateBottomLine() {
   const now = new Date();
   const left = `${DAY_ABBR[now.getDay()]} ${MONTH_ABBR[now.getMonth()]} ${now.getDate()}`;
   const hh = String(now.getHours()).padStart(2, '0');
@@ -334,12 +347,84 @@ function generateInfoMessage() {
   const right = `${hh}:${mm}:${ss}`;
 
   const gap = Math.max(1, COLS - left.length - right.length);
-  const bottom = (left + ' '.repeat(gap) + right).substring(0, COLS).padEnd(COLS, ' ');
+  return (left + ' '.repeat(gap) + right).substring(0, COLS).padEnd(COLS, ' ');
+}
+
+// Slot indices (0-based) that currently hold non-expired content, ascending.
+function activeSlots() {
+  const now = Date.now();
+  const active = [];
+  for (let i = 0; i < SLOT_COUNT; i++) {
+    const s = state.screens[i];
+    if (s && s.expiresAt > now) active.push(i);
+  }
+  return active;
+}
+
+// Drop expired slots. Returns true if anything changed (so callers can notify).
+function pruneExpired() {
+  const now = Date.now();
+  let changed = false;
+  for (let i = 0; i < SLOT_COUNT; i++) {
+    const s = state.screens[i];
+    if (s && s.expiresAt <= now) {
+      state.screens[i] = null;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+// Per-slot snapshot for the API + the `screens` WebSocket broadcast (used by
+// /setup to render the previews live). Empty slots report null content.
+export function screensPayload() {
+  const now = Date.now();
+  return {
+    slots: state.screens.map((s, i) => ({
+      slot: i + 1,
+      lines: s ? s.lines : null,
+      align: s ? s.align : 'left',
+      expiresAt: s ? s.expiresAt : null,
+      secondsRemaining: s ? Math.max(0, Math.round((s.expiresAt - now) / 1000)) : null,
+    })),
+  };
+}
+
+export function broadcastScreens() {
+  broadcast({ type: 'screens', data: screensPayload() });
+}
+
+// Advance the rotation to the next populated slot (ascending, looping). Prunes
+// expired slots first and notifies /setup if any dropped.
+function advanceRotation() {
+  if (pruneExpired()) broadcastScreens();
+  const active = activeSlots();
+  if (active.length === 0) {
+    state.currentSlot = null;
+    return;
+  }
+  // Next active slot strictly after the current one, else wrap to the first.
+  // From idle (currentSlot == null) start at the first populated slot.
+  const cur = state.currentSlot;
+  const next = cur == null ? active[0] : active.find((i) => i > cur);
+  state.currentSlot = next !== undefined ? next : active[0];
+}
+
+// Compose + broadcast the board: current screen's top rows + the date/time row.
+function renderInfoBoard() {
+  const top =
+    state.currentSlot != null && state.screens[state.currentSlot]
+      ? state.screens[state.currentSlot].lines
+      : null;
 
   const lines = [];
-  for (let i = 0; i < ROWS - 1; i++) lines.push(''.padEnd(COLS, ' '));
-  lines.push(bottom);
-  return lines;
+  for (let i = 0; i < CONTENT_ROWS; i++) {
+    lines.push(top ? top[i] : ''.padEnd(COLS, ' '));
+  }
+  lines.push(generateBottomLine());
+
+  state.currentMessage = { lines };
+  broadcast({ type: 'message', data: state.currentMessage });
 }
 
 export function startInfoScreen() {
@@ -348,22 +433,27 @@ export function startInfoScreen() {
   if (state.clockInterval) { clearInterval(state.clockInterval); state.clockInterval = null; }
   if (state.clockTimeout) { clearTimeout(state.clockTimeout); state.clockTimeout = null; }
 
-  const update = () => {
-    state.currentMessage = { lines: generateInfoMessage() };
-    broadcast({ type: 'message', data: state.currentMessage });
-  };
+  // Start on the first populated slot (or nothing) and show immediately.
+  pruneExpired();
+  state.currentSlot = activeSlots()[0] ?? null;
+  renderInfoBoard();
 
-  update(); // show immediately (seconds already floored to a multiple of INFO_STEP_S)
-
-  // Align the recurring refresh to the next wall-clock INFO_STEP_S boundary so
-  // the displayed seconds advance cleanly 00 -> 10 -> 20 ...
+  // Bottom-row clock: align the recurring refresh to the next wall-clock
+  // INFO_STEP_S boundary so the displayed seconds advance cleanly 00 -> 10 ...
   const now = new Date();
   const msToNextBoundary =
     INFO_INTERVAL_MS - (now.getSeconds() % INFO_STEP_S) * 1000 - now.getMilliseconds();
   state.infoTimeout = setTimeout(() => {
-    update();
-    state.infoInterval = setInterval(update, INFO_INTERVAL_MS);
+    renderInfoBoard();
+    state.infoInterval = setInterval(renderInfoBoard, INFO_INTERVAL_MS);
   }, msToNextBoundary);
+
+  // Screen rotation: advance every ROTATE_INTERVAL_MS. Pushes and expiries take
+  // effect here (the next rotation tick), never mid-display.
+  state.rotateInterval = setInterval(() => {
+    advanceRotation();
+    renderInfoBoard();
+  }, ROTATE_INTERVAL_MS);
 }
 
 export function stopInfoScreen() {
@@ -375,6 +465,89 @@ export function stopInfoScreen() {
     clearTimeout(state.infoTimeout);
     state.infoTimeout = null;
   }
+  if (state.rotateInterval) {
+    clearInterval(state.rotateInterval);
+    state.rotateInterval = null;
+  }
 }
+
+// --- Rotating screens API (issue #48) --------------------------------------
+// Parse a :slot param ("1".."6") to a 0-based index, or null if invalid.
+function parseSlot(raw) {
+  if (!/^[1-9][0-9]*$/.test(raw)) return null;
+  const n = Number(raw);
+  if (n < 1 || n > SLOT_COUNT) return null;
+  return n - 1;
+}
+
+// GET /api/screens - all slots (content + remaining TTL); hydrates /setup
+router.get('/screens', (req, res) => {
+  res.json(screensPayload());
+});
+
+// GET /api/screens/:slot - one slot's content + remaining TTL
+router.get('/screens/:slot', (req, res) => {
+  const slot = parseSlot(req.params.slot);
+  if (slot === null) {
+    return res.status(400).json({ error: `slot must be an integer 1-${SLOT_COUNT}` });
+  }
+  res.json(screensPayload().slots[slot]);
+});
+
+// POST /api/screens/:slot - push content to a slot; resets its 15-min TTL
+router.post('/screens/:slot', (req, res) => {
+  const slot = parseSlot(req.params.slot);
+  if (slot === null) {
+    return res.status(400).json({ error: `slot must be an integer 1-${SLOT_COUNT}` });
+  }
+
+  const { lines } = req.body;
+  if (!Array.isArray(lines)) {
+    return res.status(400).json({ error: 'lines must be an array' });
+  }
+  if (lines.length > CONTENT_ROWS) {
+    return res.status(400).json({ error: `lines may contain at most ${CONTENT_ROWS} entries` });
+  }
+  if (!lines.every((line) => typeof line === 'string')) {
+    return res.status(400).json({ error: 'each line must be a string' });
+  }
+  if (lines.some((line) => line.length > MAX_LINE_LENGTH)) {
+    return res.status(400).json({ error: `each line must be at most ${MAX_LINE_LENGTH} characters` });
+  }
+
+  const align = req.body.align ?? 'left';
+  if (align !== 'left' && align !== 'center') {
+    return res.status(400).json({ error: "align must be 'left' or 'center'" });
+  }
+
+  const expiresAt = Date.now() + SCREEN_TTL_MS;
+  state.screens[slot] = {
+    lines: formatMessage(lines, align, CONTENT_ROWS),
+    align,
+    expiresAt,
+  };
+
+  broadcastScreens();
+  res.json({ success: true, slot: slot + 1, expiresAt });
+});
+
+// DELETE /api/screens - clear all slots
+router.delete('/screens', (req, res) => {
+  state.screens = Array(SLOT_COUNT).fill(null);
+  state.currentSlot = null;
+  broadcastScreens();
+  res.json({ success: true, message: 'All screens cleared' });
+});
+
+// DELETE /api/screens/:slot - clear one slot (drops it from the rotation)
+router.delete('/screens/:slot', (req, res) => {
+  const slot = parseSlot(req.params.slot);
+  if (slot === null) {
+    return res.status(400).json({ error: `slot must be an integer 1-${SLOT_COUNT}` });
+  }
+  state.screens[slot] = null;
+  broadcastScreens();
+  res.json({ success: true, slot: slot + 1 });
+});
 
 export default router;
