@@ -95,9 +95,13 @@ static client, the REST API, and the WebSocket all on one port** (3001 inside
 the container, mapped to host `8080` by default). Recommended for an
 HDMI-attached Pi display. Full guide: `README.md`.
 
+The Pi **pulls a prebuilt multi-arch image from GHCR** and never builds from
+source — CI builds it. The compose file also runs Watchtower for hands-off
+auto-updates (issue #50).
+
 ```bash
-cp .env.example .env          # optional — defaults work as-is
-docker compose up -d --build  # build + run; restart: unless-stopped
+cp .env.example .env                  # optional — defaults work as-is
+docker compose pull && docker compose up -d   # pull image + run + Watchtower
 # open http://<host>:8080  (and /setup to configure)
 ```
 
@@ -109,9 +113,29 @@ docker compose up -d --build  # build + run; restart: unless-stopped
   :3000. A SPA fallback serves `index.html` for non-`/api` GETs so `/setup`
   survives a refresh. (`server/src/index.js`)
 - **Persistence**: state is written to `/data/.state.json` on the
-  `split-flap-data` volume, surviving rebuilds and reboots.
+  `split-flap-data` volume, surviving updates and reboots.
 - **Build host**: build on a capable machine (Mac/CI), not on a Pi 3B+ (the Vite
-  build is memory-hungry). The image is multi-arch (`arm64`).
+  build is memory-hungry). The image is multi-arch (`arm64` + `amd64`).
+
+#### Auto-update (CI → GHCR → Pi)
+
+- **CI publishes on every push to `main`** (`.github/workflows/docker-publish.yml`):
+  Buildx builds `linux/arm64,linux/amd64` and pushes `ghcr.io/jeffstrout/split-flap`
+  tags `:latest` and `:sha-<short>` using the built-in `GITHUB_TOKEN`. It passes
+  `GIT_SHA`/`BUILD_TIME` build args so the image is self-describing.
+- **The Pi auto-updates** via the `watchtower` service in `docker-compose.yml`:
+  it polls GHCR every `WATCHTOWER_POLL_INTERVAL` seconds (~20 min default), and
+  when `:latest` changes it pulls and recreates the container (label-scoped via
+  `com.centurylinklabs.watchtower.enable`, with cleanup of old images). User
+  state on the `split-flap-data` volume survives the swap.
+- **Confirm / pin / rollback**: `GET /api/version` (and the line at the bottom of
+  `/setup`) reports the running commit + build time. Pin a build with
+  `IMAGE_TAG=sha-<short>` in `.env`, then `docker compose pull && up -d`.
+- **Local builds** (devs, custom `FLIP_SPEED`): layer `docker-compose.build.yml`
+  to build from source instead of pulling —
+  `docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build split-flap`.
+  CI bakes `FLIP_SPEED=2` into the published image, so a custom speed requires a
+  local build.
 
 ### DigitalOcean App Platform
 
@@ -142,7 +166,10 @@ doctl apps logs <app-id> api --type run
 | `PERSIST_FILE` | Server | State file path. On by default (`server/.state.json`); set to `off` to disable |
 | `CLIENT_DIST` | Server | Path to the built client to serve on the same port. Unset = static serving off (dev). Set to `/app/client/dist` in the Docker image |
 | `HOST_PORT` | Compose | Host port mapped to the container's 3001 (default: `8080`; used by `docker-compose.yml`) |
-| `FLIP_SPEED` | Compose (build arg) | Flip-animation speed baked into the client: `1` = original, `2` = default/2x. Passed as `VITE_FLIP_SPEED` to the Vite build; rebuild to apply |
+| `IMAGE_TAG` | Compose | GHCR image tag to run (default: `latest`). Pin to `sha-<short>` to freeze/rollback |
+| `WATCHTOWER_POLL_INTERVAL` | Compose | Seconds between Watchtower update checks (default: `1200` ≈ 20 min) |
+| `APP_COMMIT` / `APP_BUILD_TIME` | Server (set by image) | Build provenance baked in by CI; surfaced via `GET /api/version` and `/api/health`. `APP_VERSION` optionally carries a release tag |
+| `FLIP_SPEED` | Compose (build arg, local build only) | Flip-animation speed baked into the client: `1` = original, `2` = default/2x. Passed as `VITE_FLIP_SPEED` to the Vite build via `docker-compose.build.yml`; the published GHCR image is fixed at `2` |
 
 ### WebSocket in Production
 
@@ -237,7 +264,8 @@ Theme is **dark by default**.
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/settings` | Consolidated `{ mode, qlockLanguage, theme, soundEnabled }` (used by `/setup`) |
-| `GET` | `/api/health` | Liveness/readiness probe `{ status, uptime, connectedClients, mode }` |
+| `GET` | `/api/version` | Running build `{ version, commit, builtAt }` (baked in by CI; shown on `/setup`) |
+| `GET` | `/api/health` | Liveness/readiness probe `{ status, uptime, connectedClients, mode, commit }` |
 
 ### Message Format
 

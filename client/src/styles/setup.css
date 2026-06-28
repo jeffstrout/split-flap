@@ -122,3 +122,7 @@
 .setup.theme-light .screen-tile { background: #e8e8e8; color: #1a1a1a; }
 
 .setup-note { margin-top: 32px; font-size: 14px; opacity: 0.55; }
+.setup-version {
+  margin-top: 8px; font-size: 12px; opacity: 0.4;
+  font-variant-numeric: tabular-nums; word-break: break-all;
+}

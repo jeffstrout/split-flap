@@ -41,15 +41,14 @@ returns in the mode it was last set to after a reboot.
 
 ## Quick start (Raspberry Pi)
 
-You need Docker + Docker Compose on the Pi. **Build the image on a capable
-machine** (your Mac or CI) and run it on the Pi, or build on the Pi if it has
-enough free memory — see [Building on a Pi 3B+](#building-on-a-pi-3b) below.
+You need Docker + Docker Compose on the Pi. The Pi **pulls a prebuilt image**
+from GHCR — no building on the Pi.
 
 ```bash
 git clone https://github.com/jeffstrout/split-flap.git
 cd split-flap
-cp .env.example .env      # optional — defaults work as-is
-docker compose up -d --build
+cp .env.example .env                 # optional — defaults work as-is
+docker compose pull && docker compose up -d
 ```
 
 Then open **`http://<pi-ip>:8080`** from any browser on your network. The Pi
@@ -57,11 +56,28 @@ itself can be the display: plug it into a monitor over HDMI and launch Chromium
 in kiosk mode (see [KIOSK.md](KIOSK.md)).
 
 > **Setting up a Pi from a fresh OS install?** Follow the step-by-step
-> [PI-SETUP.md](PI-SETUP.md) runbook (Docker install, swap, build, and Chromium
+> [PI-SETUP.md](PI-SETUP.md) runbook (Docker install, swap, and Chromium
 > kiosk autostart).
 
 The container has `restart: unless-stopped`, so it comes back automatically after
 a reboot or power loss.
+
+### Automatic updates
+
+The compose file also runs [Watchtower](https://containrrr.dev/watchtower/),
+which checks GHCR for a newer image every ~20 minutes and updates the display in
+place when one appears — so a push to `main` reaches the wall hands-off. Your
+mode/theme/sound/message state lives on a Docker volume and survives updates.
+
+- **See what's running:** `GET /api/version` (also shown at the bottom of
+  `/setup`) reports the commit + build time.
+- **Pin / roll back:** set `IMAGE_TAG=sha-<short>` in `.env`, then
+  `docker compose pull && docker compose up -d`. Set back to `latest` to resume
+  auto-updates.
+- **Change cadence:** `WATCHTOWER_POLL_INTERVAL` (seconds) in `.env`.
+- **Prefer manual updates?** Drop the `watchtower` service and just run
+  `docker compose pull && docker compose up -d` when you want the latest, or put
+  it on a cron/systemd timer.
 
 ---
 
@@ -77,7 +93,9 @@ defaults below apply.
 | `DEFAULT_MODE` | `qlock` | Boot mode: `qlock` (word clock) or `flip` (split-flap) |
 | `DEFAULT_QLOCK_LANG` | `en` | Word-clock language: `en` or `ar` (Arabic, RTL) |
 | `PERSIST_FILE` | `/data/.state.json` | State file on the volume; `off` to disable |
-| `FLIP_SPEED` | `2` | Flip-animation speed (build-time): `1` = original, `2` = 2×. Rebuild to apply |
+| `IMAGE_TAG` | `latest` | GHCR image tag to run; pin to `sha-<short>` to freeze/rollback |
+| `WATCHTOWER_POLL_INTERVAL` | `1200` | Seconds between auto-update checks (~20 min) |
+| `FLIP_SPEED` | `2` | Flip-animation speed. Baked in at **build** time, so it only applies to local builds ([docker-compose.build.yml](docker-compose.build.yml)); the published image is fixed at `2` |
 
 Changing the mode/theme/sound from the **setup screen** (`http://<pi-ip>:8080/setup`)
 applies to all displays instantly and persists across restarts.
@@ -99,20 +117,28 @@ the flip animation, not the server.
   the 3B+ the kiosk renders in **software** (`--disable-gpu`) — its VideoCore IV
   GPU can't drive Chromium's GL ES under Wayland — which is fine for this
   mostly-CSS board. Setup details in [PI-SETUP.md](PI-SETUP.md) / [KIOSK.md](KIOSK.md).
-- **Tune the flip speed** for weaker hardware: set `FLIP_SPEED=1` in `.env`
-  (1 = original, 2 = default/2x) and rebuild. Slower flips are gentler on the
-  3B+ because there's less per-frame churn.
+- **Tune the flip speed** for weaker hardware: the published image ships at the
+  default (`2`). For the gentler `1` you currently need a local build —
+  set `FLIP_SPEED=1` in `.env` and build with the override (see below). Slower
+  flips are gentler on the 3B+ because there's less per-frame churn.
 
-### Building on a Pi 3B+
+### Building the image yourself
 
-The Vite build is memory-hungry and the 3B+ has 1 GB RAM. Prefer building the
-image on your Mac/CI. If you must build on the Pi, add swap first:
+Normally the Pi just pulls the prebuilt GHCR image. To build from source
+instead (e.g. to test an unpushed change or bake a custom `FLIP_SPEED`), layer
+the build override — **on your Mac/CI, not a 3B+** (the Vite build is
+memory-hungry):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build split-flap
+```
+
+If you must build on a 1 GB Pi 3B+, add swap first:
 
 ```bash
 sudo dphys-swapfile swapoff
 sudo sed -i 's/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=1024/' /etc/dphys-swapfile
 sudo dphys-swapfile setup && sudo dphys-swapfile swapon
-docker compose up -d --build
 ```
 
 Run the **64-bit** Raspberry Pi OS so the standard `arm64` Node image is used.
@@ -122,15 +148,15 @@ Run the **64-bit** Raspberry Pi OS so the standard `arm64` Node image is used.
 ## Operations
 
 ```bash
-docker compose logs -f          # follow logs
-docker compose pull             # (if using a registry image)
-docker compose up -d --build    # rebuild + restart after pulling changes
-docker compose down             # stop (keeps the data volume)
-docker compose down -v          # stop AND wipe persisted state
+docker compose logs -f                       # follow logs (app + watchtower)
+docker compose pull && docker compose up -d  # update now (don't wait for the poll)
+curl http://<pi-ip>:8080/api/version         # which build is running
+docker compose down                          # stop (keeps the data volume)
+docker compose down -v                       # stop AND wipe persisted state
 ```
 
 The persisted state lives in the `split-flap-data` volume and survives
-`down`/`up` and rebuilds — only `down -v` clears it.
+`down`/`up` and image updates — only `down -v` clears it.
 
 ---
 

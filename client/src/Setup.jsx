@@ -61,6 +61,7 @@ function Setup() {
   const [saving, setSaving] = useState(false);
   const [screens, setScreens] = useState(null); // [{ slot, lines, align, expiresAt }]
   const [now, setNow] = useState(() => Date.now());
+  const [version, setVersion] = useState(null); // { version, commit, builtAt }
 
   const wsUrl = import.meta.env.DEV
     ? 'ws://localhost:3001'
@@ -77,6 +78,11 @@ function Setup() {
       .then((r) => r.json())
       .then((d) => setScreens(d.slots))
       .catch(() => setScreens([]));
+    // Which build is running — handy for confirming an auto-update landed (#50).
+    fetch('/api/version')
+      .then((r) => r.json())
+      .then(setVersion)
+      .catch(() => setVersion(null));
   }, []);
 
   // Reflect changes made from anywhere (other devices, the display, publishers)
@@ -209,6 +215,12 @@ function Setup() {
         </section>
 
         <p className="setup-note">Changes apply to all displays instantly and are saved across restarts.</p>
+        {version && (
+          <p className="setup-version">
+            running {version.commit}
+            {version.builtAt && version.builtAt !== 'unknown' ? ` · built ${version.builtAt}` : ''}
+          </p>
+        )}
       </div>
     </div>
   );

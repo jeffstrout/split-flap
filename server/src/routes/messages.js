@@ -254,13 +254,28 @@ router.get('/settings', (req, res) => {
   });
 });
 
+// Build provenance baked into the image (issue #50). CI sets APP_COMMIT /
+// APP_BUILD_TIME on every push to main; they fall back to 'dev'/'unknown' for
+// local builds. APP_VERSION can carry a release/tag if one is ever used.
+const BUILD_INFO = {
+  version: process.env.APP_VERSION || 'dev',
+  commit: process.env.APP_COMMIT || 'dev',
+  builtAt: process.env.APP_BUILD_TIME || 'unknown',
+};
+
+// GET /api/version - which build is running (used by /setup + update checks)
+router.get('/version', (req, res) => {
+  res.json(BUILD_INFO);
+});
+
 // GET /api/health - Liveness/readiness probe for deployment monitoring
 router.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     uptime: process.uptime(),
     connectedClients: state.clients.size,
-    mode: state.mode
+    mode: state.mode,
+    commit: BUILD_INFO.commit
   });
 });
 
