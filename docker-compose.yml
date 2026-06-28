@@ -38,6 +38,11 @@ services:
       # Root-equivalent on the host — acceptable on a dedicated display Pi.
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
+      # Watchtower's client otherwise negotiates an ancient Docker API version
+      # (1.25) that modern Docker Engine rejects ("client version too old"),
+      # which silently breaks every update check (issue #56). 1.40 is the
+      # daemon's minimum, so it's safely in range; override if a daemon raises it.
+      DOCKER_API_VERSION: ${DOCKER_API_VERSION:-1.40}
       WATCHTOWER_POLL_INTERVAL: ${WATCHTOWER_POLL_INTERVAL:-1200}  # seconds (~20 min)
       WATCHTOWER_LABEL_ENABLE: "true"   # only update opted-in containers
       WATCHTOWER_CLEANUP: "true"        # prune old images (saves SD-card space)
