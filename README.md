@@ -78,6 +78,11 @@ mode/theme/sound/message state lives on a Docker volume and survives updates.
 - **Prefer manual updates?** Drop the `watchtower` service and just run
   `docker compose pull && docker compose up -d` when you want the latest, or put
   it on a cron/systemd timer.
+- **Kiosk showing a Pi's own HDMI display?** An update refreshes server **data**
+  over the WebSocket immediately, but the browser keeps running the page it
+  already loaded — so client **code** changes (animations, the `/setup` UI) only
+  appear after the page reloads. Reboot the Pi, or `sudo systemctl restart
+  getty@tty1`, to reload the kiosk. (See [PI-SETUP.md](PI-SETUP.md).)
 
 ---
 
