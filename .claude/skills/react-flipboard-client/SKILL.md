@@ -42,10 +42,15 @@ The WebSocket URL is dynamic:
 Character set (ordered): `' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-:\'"/()@#$%&*+'`
 
 When target changes:
-1. Calculate steps to cycle forward through the character set (wraps around)
+1. Calculate steps via the **shorter direction** through the character set
+   (forward or backward, whichever is fewer steps — issue #60)
 2. Stagger start delay: `rowIndex * 50 + charIndex * 20` ms
 3. Per-flip: 80ms CSS animation, character swaps at 40ms midpoint
 4. Inter-flip gap: 30ms
+
+The values in 2–4 are the **base (1×)** timings. They're divided by
+`VITE_FLIP_SPEED` (default **3**), so at the default a flip is ~27ms with a ~13ms
+gap. See `client/src/components/flipTiming.js`.
 
 The animation uses CSS 3D transforms (rotateX) on a `.flip-card` element.
 

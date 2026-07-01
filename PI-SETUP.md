@@ -221,6 +221,21 @@ New images install themselves via Watchtower; the `pull && up -d` line just
 forces it immediately. Persisted settings live in the `split-flap-data` Docker
 volume and survive reboots and updates — only `down -v` clears them.
 
+> **After an update, reload the kiosk to pick up client-side changes.** An image
+> update swaps the server + the browser bundle, and the display's WebSocket
+> reconnects — so **data** (screens, mode, theme) refreshes immediately. But the
+> Chromium kiosk keeps running the **page it already loaded**, so changes to the
+> client **code** (e.g. the flip animation, the `/setup` UI) don't appear until
+> the page reloads. Force a reload with a reboot, or just relaunch the kiosk:
+>
+> ```bash
+> sudo systemctl restart getty@tty1   # relaunches cage + Chromium (no full reboot)
+> # or: sudo reboot
+> ```
+>
+> Tip: `curl -s http://localhost:8080/api/version` reports the *served* build; if
+> the display looks unchanged after it advances, the kiosk just needs a reload.
+
 ---
 
 ## Troubleshooting
@@ -229,6 +244,7 @@ volume and survive reboots and updates — only `down -v` clears them.
 |---------|-----|
 | Build killed / out-of-memory | Only when building on the Pi: confirm swap is active (`free -h`); redo step 2. Or just pull the prebuilt image |
 | Display didn't auto-update | Check `docker compose logs watchtower`; force it with `docker compose pull && docker compose up -d`; confirm the running build at `/api/version` |
+| `/api/version` shows the new build but the display's animation/UI looks unchanged | The kiosk is still showing the pre-update page — client code only reloads when the page does. `sudo systemctl restart getty@tty1` (or `sudo reboot`) |
 | Watchtower logs `client version 1.25 is too old. Minimum supported API version is 1.40` | Docker API mismatch — ensure `DOCKER_API_VERSION` is set on the `watchtower` service (it is in the current `docker-compose.yml`); `git pull` then `docker compose up -d` to recreate it |
 | `docker: permission denied` | You skipped the reboot in step 1 (`usermod -aG docker`) |
 | Page unreachable from another device | Use the Pi's IP; check `docker compose ps` shows it `Up` |

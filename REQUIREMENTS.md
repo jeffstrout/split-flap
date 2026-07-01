@@ -16,6 +16,9 @@ Requirement IDs are stable references for issues, PRs, and commits:
 tag marks requirements that are not yet implemented.
 
 ### Changelog
+- **0.9** — Split-flap animation flips the shorter direction through the
+  character wheel (was always forward) and the default speed is 3x (was 2x), so
+  full-board changes settle within the screen rotation (FR-17).
 - **0.8** — Info screen now refreshes every 10 seconds with seconds on
   10-second increments (`00, 10, …, 50`), aligned to the wall-clock 10s
   boundary (FR-40).
@@ -191,10 +194,12 @@ See NFR-7 (Planned) for backoff.
 
 ### FR-17 Flip animation
 Each character tile animates through the FR-5 character sequence from its
-current glyph to its target glyph, producing the split-flap effect. An optional
-tick sound plays per flip when sound is enabled. Flip timing is centralized in
-`client/src/components/flipTiming.js` (single source for JS steps + the CSS
-`--flip-duration`).
+current glyph to its target glyph — flipping the **shorter direction** through
+the wheel (forward or backward) to minimize steps — producing the split-flap
+effect. An optional tick sound plays per flip when sound is enabled. Flip timing
+is centralized in `client/src/components/flipTiming.js` (single source for JS
+steps + the CSS `--flip-duration`); speed is set at build time by
+`VITE_FLIP_SPEED` (default 3x).
 
 ### FR-18 Kiosk display
 The client must render correctly full-screen for unattended kiosk use
