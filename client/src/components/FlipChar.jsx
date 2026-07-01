@@ -40,13 +40,13 @@ function FlipChar({ char, delay = 0, onFlip }) {
 
     if (currentIndex === targetIndex) return;
 
-    // Calculate steps (always flip forward through the character set)
-    let steps;
-    if (targetIndex >= currentIndex) {
-      steps = targetIndex - currentIndex;
-    } else {
-      steps = CHARACTERS.length - currentIndex + targetIndex;
-    }
+    // Flip via the SHORTER direction through the character wheel (issue #60):
+    // going the nearer way roughly halves the steps for far-apart glyphs, which
+    // cuts the per-change React/animation work so a full board settles in time.
+    const N = CHARACTERS.length;
+    const forward = (targetIndex - currentIndex + N) % N; // steps flipping forward
+    const dir = forward <= N - forward ? 1 : -1;           // +1 forward, -1 backward
+    const steps = dir === 1 ? forward : N - forward;
 
     let step = 0;
     const flipNext = () => {
@@ -58,7 +58,7 @@ function FlipChar({ char, delay = 0, onFlip }) {
       }
 
       setIsFlipping(true);
-      const nextIndex = (currentIndex + step + 1) % CHARACTERS.length;
+      const nextIndex = (((currentIndex + dir * (step + 1)) % N) + N) % N;
       const nextChar = CHARACTERS[nextIndex];
 
       // Trigger flip sound

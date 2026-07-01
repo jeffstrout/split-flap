@@ -95,7 +95,7 @@ defaults below apply.
 | `PERSIST_FILE` | `/data/.state.json` | State file on the volume; `off` to disable |
 | `IMAGE_TAG` | `latest` | GHCR image tag to run; pin to `sha-<short>` to freeze/rollback |
 | `WATCHTOWER_POLL_INTERVAL` | `1200` | Seconds between auto-update checks (~20 min) |
-| `FLIP_SPEED` | `2` | Flip-animation speed. Baked in at **build** time, so it only applies to local builds ([docker-compose.build.yml](docker-compose.build.yml)); the published image is fixed at `2` |
+| `FLIP_SPEED` | `3` | Flip-animation speed. Baked in at **build** time, so it only applies to local builds ([docker-compose.build.yml](docker-compose.build.yml)); the published image is fixed at `3` |
 
 Changing the mode/theme/sound from the **setup screen** (`http://<pi-ip>:8080/setup`)
 applies to all displays instantly and persists across restarts.

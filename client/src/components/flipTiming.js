@@ -1,12 +1,13 @@
 // Split-flap animation timing — single source of truth (issue #42).
 //
 // Speed is configurable at build time via VITE_FLIP_SPEED (a multiplier on the
-// original mechanical timing): 1 = original speed, 2 = current default (twice
-// as fast). Lower values are gentler on low-power hardware like a Raspberry Pi
-// 3B+ — fewer animation frames per second of board churn. Set it through the
-// Docker `.env` (FLIP_SPEED -> build arg) or `VITE_FLIP_SPEED=1 npm run build`.
+// original mechanical timing): 1 = original speed, 3 = current default (three
+// times as fast, so full-board changes settle inside the screen rotation).
+// Lower values are gentler on low-power hardware like a Raspberry Pi 3B+ — fewer
+// animation frames per second of board churn. Set it through the Docker `.env`
+// (FLIP_SPEED -> build arg) or `VITE_FLIP_SPEED=1 npm run build`.
 const parsed = Number(import.meta.env.VITE_FLIP_SPEED);
-const SPEED = Number.isFinite(parsed) && parsed > 0 ? parsed : 2;
+const SPEED = Number.isFinite(parsed) && parsed > 0 ? parsed : 3;
 
 // Base (1x) durations — the original mechanical timing.
 const BASE_FLIP_FULL_MS = 80; // one full card flip

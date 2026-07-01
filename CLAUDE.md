@@ -134,7 +134,7 @@ docker compose pull && docker compose up -d   # pull image + run + Watchtower
 - **Local builds** (devs, custom `FLIP_SPEED`): layer `docker-compose.build.yml`
   to build from source instead of pulling —
   `docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build split-flap`.
-  CI bakes `FLIP_SPEED=2` into the published image, so a custom speed requires a
+  CI bakes `FLIP_SPEED=3` into the published image, so a custom speed requires a
   local build.
 
 ### DigitalOcean App Platform
@@ -169,7 +169,7 @@ doctl apps logs <app-id> api --type run
 | `IMAGE_TAG` | Compose | GHCR image tag to run (default: `latest`). Pin to `sha-<short>` to freeze/rollback |
 | `WATCHTOWER_POLL_INTERVAL` | Compose | Seconds between Watchtower update checks (default: `1200` ≈ 20 min) |
 | `APP_COMMIT` / `APP_BUILD_TIME` | Server (set by image) | Build provenance baked in by CI; surfaced via `GET /api/version` and `/api/health`. `APP_VERSION` optionally carries a release tag |
-| `FLIP_SPEED` | Compose (build arg, local build only) | Flip-animation speed baked into the client: `1` = original, `2` = default/2x. Passed as `VITE_FLIP_SPEED` to the Vite build via `docker-compose.build.yml`; the published GHCR image is fixed at `2` |
+| `FLIP_SPEED` | Compose (build arg, local build only) | Flip-animation speed baked into the client: `1` = original, `3` = default/3x. Passed as `VITE_FLIP_SPEED` to the Vite build via `docker-compose.build.yml`; the published GHCR image is fixed at `3` |
 
 ### WebSocket in Production
 

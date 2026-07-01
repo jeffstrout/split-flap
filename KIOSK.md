@@ -70,7 +70,7 @@ Performance notes by model (rendering is the bottleneck, not the server):
   at once and can stutter on its single Cortex-A53; the idle info-screen ticks are
   light. `FlipChar` is wrapped in `React.memo` to cut re-renders. If the animation
   feels too busy, **slow the flip down** by building with `FLIP_SPEED=1`
-  (1 = original speed, 2 = default/2x) via `docker-compose.build.yml`.
+  (1 = original speed, 3 = default/3x) via `docker-compose.build.yml`.
 - Run **64-bit Raspberry Pi OS** for the `arm64` image on any model.
 
 ## Prevent the OS from sleeping / screensaver

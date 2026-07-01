@@ -123,7 +123,7 @@ updates.
 - **Word-clock modes** (`qlock`) have no flip animation and run smoothly on any Pi.
 - **Pi 3B+ only**: if **split-flap** full-board changes feel janky, slow the
   animation to `FLIP_SPEED=1`. This is baked in at build time, so it requires a
-  local build (see the note above); the published image is fixed at `2`.
+  local build (see the note above); the published image is fixed at `3`.
 
 ---
 
