@@ -60,6 +60,6 @@ jobs:
           build-args: |
             GIT_SHA=${{ github.sha }}
             BUILD_TIME=${{ steps.vars.outputs.build_time }}
-            VITE_FLIP_SPEED=2
+            VITE_FLIP_SPEED=3
           cache-from: type=gha
           cache-to: type=gha,mode=max
