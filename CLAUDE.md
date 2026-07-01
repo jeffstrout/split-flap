@@ -407,7 +407,7 @@ chrome.exe --kiosk http://localhost:3000
 ### Config & DevOps
 
 - `README.md` - Project overview + Docker / Raspberry Pi quick start
-- `PI-SETUP.md` - Fresh-OS Raspberry Pi 3B+ runbook (Docker, swap, kiosk autostart)
+- `PI-SETUP.md` - Fresh-OS Raspberry Pi runbook (3B+/4B/5; Docker, kiosk autostart, per-model GPU flags)
 - `Dockerfile` - Multi-stage single-container build (client build → slim runtime)
 - `docker-compose.yml` - One service, `restart: unless-stopped`, `/data` volume
 - `.dockerignore` - Keeps host `node_modules`/`dist`/state out of the image
