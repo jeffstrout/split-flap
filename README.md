@@ -102,25 +102,25 @@ applies to all displays instantly and persists across restarts.
 
 ---
 
-## Raspberry Pi 3B+ notes
+## Raspberry Pi performance notes
 
-The 3B+ works, with a couple of caveats — the heavy part is Chromium rendering
-the flip animation, not the server.
+Any recent Pi runs the server easily — the only heavy part is Chromium rendering
+the flip animation, and that scales with the model.
 
-- **Word-clock modes are smooth** on the 3B+ (no flip animation — just letter
-  highlighting). If you mostly run the word clock, the 3B+ is a fine choice.
-- **Full-board split-flap transitions are demanding** — up to ~192 tiles
-  animating at once stresses a single Cortex-A53 core. Expect some jank on big
-  changes; the idle 5-second info-screen ticks (only a few characters change)
-  are fine. A Pi 4B handles the heavy animation noticeably better.
-- The client is built with `React.memo` on each tile to minimize re-renders. On
-  the 3B+ the kiosk renders in **software** (`--disable-gpu`) — its VideoCore IV
-  GPU can't drive Chromium's GL ES under Wayland — which is fine for this
-  mostly-CSS board. Setup details in [PI-SETUP.md](PI-SETUP.md) / [KIOSK.md](KIOSK.md).
-- **Tune the flip speed** for weaker hardware: the published image ships at the
-  default (`2`). For the gentler `1` you currently need a local build —
-  set `FLIP_SPEED=1` in `.env` and build with the override (see below). Slower
-  flips are gentler on the 3B+ because there's less per-frame churn.
+- **Pi 4B / 5** — the recommended choice. They drive the full-board split-flap
+  animation **GPU-accelerated** (VideoCore VI does Chromium's GL ES under Wayland)
+  at the default speed, with cores to spare. No tuning needed; just keep the
+  kiosk's GPU on (see [PI-SETUP.md](PI-SETUP.md) / [KIOSK.md](KIOSK.md)).
+- **Word-clock modes are smooth on any Pi** (no flip animation — just letter
+  highlighting).
+- **Pi 3B+** — works, with caveats. Full-board split-flap transitions animate up
+  to ~192 tiles at once and stress its single Cortex-A53; expect some jank on big
+  changes (idle info-screen ticks are fine). Its VideoCore IV can't drive GL ES
+  under Wayland, so the kiosk renders in **software** (`--disable-gpu`) — fine for
+  this mostly-CSS board. If big changes feel busy, build with `FLIP_SPEED=1` (the
+  gentler original speed) via the build override below; the published image ships
+  at `2`.
+- The client wraps each tile in `React.memo` to minimize re-renders on all models.
 
 ### Building the image yourself
 

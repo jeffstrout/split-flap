@@ -34,9 +34,15 @@ Chromium, launched from a console auto-login. Full step-by-step:
 # On the Pi (Raspberry Pi OS Lite):
 sudo apt install -y cage chromium
 
-# Launch fullscreen on the HDMI console. --disable-gpu is REQUIRED on the 3B+:
-# its VideoCore IV GPU can't give Chromium a working GL ES context under Wayland
-# (hardware GL black-screens), so render in software.
+# Pi 4B / 5 — keep GPU acceleration on (VideoCore VI drives Chromium's GL ES
+# under Wayland fine, giving smoother flip animation):
+cage -- chromium --kiosk --ozone-platform=wayland \
+  --noerrdialogs --disable-infobars --incognito --test-type \
+  http://localhost:8080
+
+# Pi 3B+ — add --disable-gpu: its older VideoCore IV can't give Chromium a
+# working GL ES context under Wayland (hardware GL black-screens), so render in
+# software (fine for this mostly-CSS board):
 cage -- chromium --kiosk --ozone-platform=wayland \
   --noerrdialogs --disable-infobars --incognito \
   --disable-gpu --disable-gpu-compositing --test-type \
@@ -49,23 +55,23 @@ cage -- chromium --kiosk --ozone-platform=wayland \
 > the browser can beat the server and land on an error page. (Not needed for the
 > manual launch above, where the server is already running.)
 
-> ⚠️ Do **not** use `--enable-gpu-rasterization --ignore-gpu-blocklist` on the
-> 3B+ — forcing the hardware GPU path makes Chromium's GPU process crash and the
-> screen stays black. Software rendering (`--disable-gpu`) is correct here; the
-> board is mostly CSS, so it renders fine.
+> ⚠️ On the **3B+**, don't force the hardware GPU path
+> (`--enable-gpu-rasterization --ignore-gpu-blocklist`) — Chromium's GPU process
+> crashes and the screen stays black; software rendering (`--disable-gpu`) is
+> correct there. On a **4B/5** a black screen is unusual — check `~/cage.log`, and
+> if the GPU path is at fault, fall back to `--disable-gpu` as a workaround.
 
-Performance notes for the **Pi 3B+** (rendering is the bottleneck, not the
-server, and it's software-rendered here):
+Performance notes by model (rendering is the bottleneck, not the server):
 
-- The **word-clock modes** (`qlock`) have no flip animation and run smoothly.
-- **Full-board split-flap** transitions animate up to ~192 tiles at once and can
-  stutter on the 3B+'s single Cortex-A53; the idle info-screen ticks are light.
-  A **Pi 4B** handles the heavy animation noticeably better.
-- `FlipChar` is wrapped in `React.memo` to cut re-renders. If full-board
-  animations feel too busy, **slow the flip down**: set `FLIP_SPEED=1` in `.env`
-  (1 = original speed, 2 = default/2x) and rebuild with
-  `docker compose up -d --build`.
-- Run **64-bit Raspberry Pi OS** for the smoothest `arm64` image.
+- **Word-clock modes** (`qlock`) have no flip animation and run smoothly on any Pi.
+- **Pi 4B / 5** run the full-board split-flap animation GPU-accelerated at the
+  default speed — no tuning needed.
+- **Pi 3B+** (software-rendered): full-board transitions animate up to ~192 tiles
+  at once and can stutter on its single Cortex-A53; the idle info-screen ticks are
+  light. `FlipChar` is wrapped in `React.memo` to cut re-renders. If the animation
+  feels too busy, **slow the flip down** by building with `FLIP_SPEED=1`
+  (1 = original speed, 2 = default/2x) via `docker-compose.build.yml`.
+- Run **64-bit Raspberry Pi OS** for the `arm64` image on any model.
 
 ## Prevent the OS from sleeping / screensaver
 

@@ -1,8 +1,10 @@
-# Raspberry Pi 3B+ Setup
+# Raspberry Pi Setup (3B+ / 4B / 5)
 
 A step-by-step runbook to turn a fresh Raspberry Pi OS install into the
 Split-Flap wall display: the Pi runs the Docker container **and** drives the
-HDMI monitor in Chromium kiosk mode.
+HDMI monitor in Chromium kiosk mode. Works on a **Pi 3B+, 4B, or 5** — the steps
+are the same; where a step differs by model (kiosk GPU flags, build swap) it's
+called out.
 
 > For the Docker architecture and config reference, see [README.md](README.md).
 > For kiosk/display tuning, see [KIOSK.md](KIOSK.md).
@@ -11,8 +13,8 @@ HDMI monitor in Chromium kiosk mode.
 
 ## 0. Use the 64-bit OS
 
-The 3B+ has only 1 GB RAM, so 64-bit Raspberry Pi OS builds and runs more
-reliably than 32-bit. Confirm:
+Run 64-bit Raspberry Pi OS on any model — it's required for the `arm64` image
+(and on the 1 GB 3B+ it also runs more reliably than 32-bit). Confirm:
 
 ```bash
 uname -m      # aarch64 = 64-bit (good).  armv7l = 32-bit (re-flash recommended)
@@ -113,13 +115,15 @@ updates.
 > `docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build split-flap`
 > (slow on a 3B+, ~10–20 min). Prefer building on a Mac/CI.
 
-### Tuning for the 3B+
+### Tuning
 
-- **Word-clock modes** (`qlock`) have no flip animation and run smoothly — a good
-  default for the 3B+.
-- If **split-flap** full-board changes feel janky, slow the animation to
-  `FLIP_SPEED=1`. This is baked in at build time, so it requires a local build
-  (see the note above); the published image is fixed at `2`.
+- **Pi 4B / 5**: no tuning needed — they run the full-board animation
+  GPU-accelerated at the default speed. (Make sure the kiosk keeps GPU on; see
+  step 5c.)
+- **Word-clock modes** (`qlock`) have no flip animation and run smoothly on any Pi.
+- **Pi 3B+ only**: if **split-flap** full-board changes feel janky, slow the
+  animation to `FLIP_SPEED=1`. This is baked in at build time, so it requires a
+  local build (see the note above); the published image is fixed at `2`.
 
 ---
 
@@ -128,7 +132,7 @@ updates.
 Raspberry Pi OS **Lite** has no desktop or browser, which is ideal for a kiosk —
 nothing wasted on a full desktop. We add a minimal fullscreen browser with
 **cage** (a tiny Wayland kiosk compositor) launched from a console auto-login.
-This is the setup verified on a real 3B+; no keyboard or mouse is needed.
+This setup is verified on a 3B+ and a 4B; no keyboard or mouse is needed.
 
 > **Desktop image instead of Lite?** If `chromium` is already installed and you
 > have a desktop session, you can skip cage and drop a
@@ -150,10 +154,12 @@ sudo raspi-config nonint do_boot_behaviour B2   # B2 = Console Autologin
 ```
 
 **c) Launch the kiosk from that console login.** Append this to `~/.bash_profile`
-so it runs only on the physical console (tty1). Note `--disable-gpu`: the 3B+'s
-VideoCore IV GPU can't give Chromium a working GL ES context under Wayland
-(it black-screens with hardware GL), so we render in software — fine for this
-mostly-CSS board:
+so it runs only on the physical console (tty1). The block below is for a **Pi 4B
+or 5**, which keep GPU acceleration on (their VideoCore VI drives Chromium's GL
+ES under Wayland, giving smoother animation). **On a Pi 3B+**, add
+`--disable-gpu --disable-gpu-compositing` to the `exec` line — its older
+VideoCore IV can't do hardware GL under Wayland and will black-screen otherwise,
+so it must render in software (fine for this mostly-CSS board).
 
 The `until` line waits for the container's web server before launching the
 browser — important on a cold boot, where Docker + Node take 10–30 s to come up
@@ -166,9 +172,9 @@ cat >> ~/.bash_profile <<'EOF'
 if [ "$(tty)" = "/dev/tty1" ]; then
   # Wait for the container's web server so a cold boot doesn't land on an error page
   until curl -sf http://localhost:8080/api/health >/dev/null 2>&1; do sleep 2; done
+  # Pi 3B+: add --disable-gpu --disable-gpu-compositing before --test-type
   exec cage -- chromium --kiosk --ozone-platform=wayland \
-    --noerrdialogs --disable-infobars --incognito \
-    --disable-gpu --disable-gpu-compositing --test-type \
+    --noerrdialogs --disable-infobars --incognito --test-type \
     http://localhost:8080 >/home/pi/cage.log 2>&1
 fi
 EOF
@@ -226,7 +232,7 @@ volume and survive reboots and updates — only `down -v` clears them.
 | Watchtower logs `client version 1.25 is too old. Minimum supported API version is 1.40` | Docker API mismatch — ensure `DOCKER_API_VERSION` is set on the `watchtower` service (it is in the current `docker-compose.yml`); `git pull` then `docker compose up -d` to recreate it |
 | `docker: permission denied` | You skipped the reboot in step 1 (`usermod -aG docker`) |
 | Page unreachable from another device | Use the Pi's IP; check `docker compose ps` shows it `Up` |
-| Animation stutters on full-board changes | Build locally with `FLIP_SPEED=1` (see step 4 note) |
+| Animation stutters on full-board changes (3B+) | Build locally with `FLIP_SPEED=1` (see step 4 note). A 4B/5 shouldn't need this |
 | Console shows a **login prompt**, not the board | The kiosk session didn't launch — check `cat ~/cage.log` and that step 5b/5c ran; restart with `sudo systemctl restart getty@tty1` |
-| Screen is **black** (cursor or blank) with `connectedClients: 1` | Chromium's GPU process is crashing — confirm `--disable-gpu` is in the `~/.bash_profile` launch line (see `~/cage.log` for `eglCreateContext` errors) |
+| Screen is **black** (cursor or blank) with `connectedClients: 1` | Chromium's GPU process is crashing. **3B+**: make sure `--disable-gpu --disable-gpu-compositing` are in the `~/.bash_profile` launch line. **4B/5**: unusual — check `~/cage.log` for `eglCreateContext`/GL errors and, if the GPU path is at fault, add `--disable-gpu` as a fallback |
 | `chromium`/`cage` not found | `sudo apt install -y cage chromium`; match the binary name in `~/.bash_profile` |
