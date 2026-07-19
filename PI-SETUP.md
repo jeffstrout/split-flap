@@ -9,6 +9,26 @@ called out.
 > For the Docker architecture and config reference, see [README.md](README.md).
 > For kiosk/display tuning, see [KIOSK.md](KIOSK.md).
 
+## Quick install (Pi 4B, one script)
+
+On a **Pi 4B** running **Raspberry Pi OS Lite (64-bit)**, [`install-pi4b.sh`](install-pi4b.sh)
+does the whole runbook below unattended — updates the OS, installs Docker, pulls
+the (public) GHCR image, starts the container + Watchtower, sets up the
+Chromium/cage kiosk, and reboots into the board. No repo clone or GitHub token
+needed. Copy it to the Pi and run it as the `pi` user:
+
+```bash
+# from your Mac
+scp install-pi4b.sh pi@splitflap.local:~/
+# then on the Pi (edit the vars at the top first if you like)
+bash ~/install-pi4b.sh
+```
+
+Edit the four variables at the top (`TZ_NAME`, `HOST_PORT`, `DEFAULT_MODE`,
+`DEFAULT_QLOCK_LANG`) before running if the defaults don't suit. The script is
+idempotent — safe to re-run. Prefer the manual steps below for a 3B+/5, for
+building locally, or to understand what each step does.
+
 ---
 
 ## 0. Use the 64-bit OS
