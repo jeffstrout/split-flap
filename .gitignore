@@ -3,6 +3,10 @@ node_modules/
 dist/
 .env
 
+# Python
+__pycache__/
+*.py[cod]
+
 # Logs
 logs/
 *.log
