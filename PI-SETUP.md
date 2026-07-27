@@ -9,6 +9,36 @@ called out.
 > For the Docker architecture and config reference, see [README.md](README.md).
 > For kiosk/display tuning, see [KIOSK.md](KIOSK.md).
 
+## Quick install (Pi 4B, one script)
+
+On a **Pi 4B** running **Raspberry Pi OS Lite (64-bit)**, [`install-pi4b.sh`](install-pi4b.sh)
+does the whole runbook below unattended — updates the OS, installs Docker, pulls
+the (public) GHCR image, starts the container + Watchtower, sets up the
+Chromium/cage kiosk, and reboots into the board. No repo clone or GitHub token
+needed; the Pi only needs internet access. Run it as the `pi` user:
+
+```bash
+curl -fsSL https://gist.githubusercontent.com/jeffstrout/be50eefa386d272ec5225a5d70268e1f/raw/install-pi4b.sh | bash
+```
+
+That pulls the script from a public gist, so nothing has to be copied from
+another machine. To change the defaults, download it first and edit the four
+variables at the top (`TZ_NAME`, `HOST_PORT`, `DEFAULT_MODE`,
+`DEFAULT_QLOCK_LANG`) before running — or just accept them and adjust later at
+`/setup`:
+
+```bash
+curl -fsSL https://gist.githubusercontent.com/jeffstrout/be50eefa386d272ec5225a5d70268e1f/raw/install-pi4b.sh -o install-pi4b.sh
+nano install-pi4b.sh   # edit the vars at the top
+bash install-pi4b.sh
+```
+
+The script is idempotent — safe to re-run. Prefer the manual steps below for a
+3B+/5, for building locally, or to understand what each step does.
+
+> The gist is a standalone copy of `install-pi4b.sh` in this repo; if the script
+> here changes, update the gist too (`gh gist edit be50eefa386d272ec5225a5d70268e1f install-pi4b.sh`).
+
 ---
 
 ## 0. Use the 64-bit OS
