@@ -1,0 +1,49 @@
+name: Tests
+
+# Canonical form: jeffstrout/homelab-standards/workflows/test-node.yml
+#
+# Runs on PRs *and* pushes to main, so a merge that breaks the suite is visible
+# immediately rather than at the next PR.
+#
+# `server` currently has no test script; `npm test --if-present` no-ops there
+# rather than failing, so adding server tests later needs no workflow change.
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        workspace: [server, client]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ${{ matrix.workspace }}/package-lock.json
+
+      - name: Install
+        working-directory: ${{ matrix.workspace }}
+        run: npm ci
+
+      - name: Test
+        working-directory: ${{ matrix.workspace }}
+        run: npm test --if-present
+
+      # The client must still build — a broken Vite build breaks the image, and
+      # that would otherwise only surface after merge, in docker-publish.
+      - name: Build
+        if: matrix.workspace == 'client'
+        working-directory: client
+        run: npm run build
