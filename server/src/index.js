@@ -4,6 +4,7 @@ import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import path from 'path';
 import messagesRouter, { startInfoScreen, screensPayload } from './routes/messages.js';
+import docsRouter from './routes/docs.js';
 import { ROWS, COLS } from './config.js';
 import { loadPersisted, startPersistence } from './persistence.js';
 
@@ -77,6 +78,9 @@ startPersistence(state);
 if (state.mode === 'flip') startInfoScreen();
 
 // Routes
+// Mounted before the message router so /api/docs is not shadowed by any
+// parameterised route added there later.
+app.use('/api', docsRouter);
 app.use('/api', messagesRouter);
 
 // Serve the built client from a single container (Docker / Raspberry Pi).

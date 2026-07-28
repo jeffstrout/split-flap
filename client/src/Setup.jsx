@@ -66,7 +66,7 @@ function Setup() {
   const wsUrl = import.meta.env.DEV
     ? 'ws://localhost:3001'
     : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api`;
-  const { lastMessage } = useWebSocket(wsUrl);
+  const { lastMessage, isConnected } = useWebSocket(wsUrl);
 
   // Hydrate from current server state on load.
   useEffect(() => {
@@ -137,7 +137,14 @@ function Setup() {
   const setSound = (on) => post(`/api/sound/${on ? 'on' : 'off'}`);
 
   if (!settings) {
-    return <div className="setup theme-dark"><p className="setup-loading">Loading…</p></div>;
+    return (
+      <div className="setup theme-dark">
+        <header className="hl-header">
+          <h1 className="hl-header-name">Split-Flap Display</h1>
+        </header>
+        <div className="setup-body"><p className="setup-loading">Loading…</p></div>
+      </div>
+    );
   }
 
   const selected = selectedFrom(settings);
@@ -146,11 +153,31 @@ function Setup() {
 
   return (
     <div className={`setup ${themeClass}`}>
+      {/* Row one of the shared shell header: appliance name, status, nav,
+          running commit. Identical on every appliance
+          (jeffstrout/homelab-standards#5). It sits OUTSIDE .setup-card so it
+          spans the viewport like the other two appliances' bars, rather than
+          being a heading inside the content column. */}
+      <header className="hl-header">
+        <h1 className="hl-header-name">Split-Flap Display</h1>
+        <span className={`hl-pill hl-pill--${isConnected ? 'ok' : 'crit'}`}>
+          {isConnected ? 'Connected' : 'Disconnected'}
+        </span>
+        <span className="hl-header-spacer" />
+        <nav className="hl-header-nav">
+          <a className="hl-header-link" href="/api/health" target="_blank" rel="noopener">Health</a>
+          <a className="hl-header-link" href="/api/docs" target="_blank" rel="noopener">API docs</a>
+          <a className="hl-header-link" href="/api/screens" target="_blank" rel="noopener">Screens JSON</a>
+          <a className="hl-header-link" href="/">View display →</a>
+        </nav>
+        <span className="hl-header-meta">
+          {version
+            ? `${version.commit}${version.builtAt && version.builtAt !== 'unknown' ? ` \u00b7 ${version.builtAt.slice(0, 10)}` : ''}`
+            : ''}
+        </span>
+      </header>
+      <div className="setup-body">
       <div className="setup-card">
-        <header className="setup-header">
-          <h1>Display Setup</h1>
-          <a className="setup-link" href="/">View display →</a>
-        </header>
 
         <section className="setup-section">
           <h2>Mode</h2>
@@ -232,12 +259,7 @@ function Setup() {
         </section>
 
         <p className="setup-note">Changes apply to all displays instantly and are saved across restarts.</p>
-        {version && (
-          <p className="setup-version">
-            running {version.commit}
-            {version.builtAt && version.builtAt !== 'unknown' ? ` · built ${version.builtAt}` : ''}
-          </p>
-        )}
+      </div>
       </div>
     </div>
   );
