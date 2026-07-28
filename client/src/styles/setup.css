@@ -1,4 +1,16 @@
-/* Setup / config screen (issue #35). */
+/* Setup / config screen (issue #35).
+ *
+ * Styled from the shared homelab design tokens (issue #69). This is an ADMIN
+ * surface, so it is light and uses the system font stack regardless of the
+ * board's own theme.
+ *
+ * The one deliberate exception is the slot preview (.screen-grid/.screen-tile):
+ * it is a miniature of the wall board, so it keeps the board's colours and
+ * Roboto Condensed. Restyling it to the admin palette would make the preview
+ * lie about what the display actually shows.
+ */
+@import './tokens.css';
+
 .setup {
   min-height: 100vh;
   display: flex;
@@ -6,109 +18,147 @@
   justify-content: center;
   padding: 6vh 16px;
   box-sizing: border-box;
-  font-family: 'Roboto Condensed', system-ui, sans-serif;
+  font-family: var(--hl-font-sans);
+  font-size: var(--hl-text-base);
+  line-height: var(--hl-leading);
   /* Always show a pointer here (issue #52). The kiosk shell hides the cursor
      globally (`body { cursor: none }` in index.html) for the wall display; this
-     interactive config screen must override that. The .setup element's own
-     cursor wins over the inherited body rule, so the pointer is visible across
-     the whole page (buttons keep their own `cursor: pointer`). */
+     interactive config screen must override that. */
   cursor: auto;
 }
-.setup.theme-dark { background: #0a0a0a; color: #f2f2f2; }
-.setup.theme-light { background: #f4f4f4; color: #111; }
 
-.setup-loading { opacity: 0.7; }
-
-.setup-card {
-  width: 100%;
-  max-width: 640px;
+/* Admin chrome is light in both board themes. `.theme-*` still arrives from
+   Setup.jsx and still drives the slot preview below. */
+.setup.theme-dark,
+.setup.theme-light {
+  background: var(--hl-canvas);
+  color: var(--hl-fg);
 }
+
+.setup-loading { color: var(--hl-fg-muted); }
+
+.setup-card { width: 100%; max-width: 640px; }
 
 .setup-header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 8px;
+  gap: var(--hl-space-4);
+  margin-bottom: var(--hl-space-2);
 }
-.setup-header h1 { font-size: 28px; font-weight: 700; margin: 0; letter-spacing: 0.02em; }
-.setup-link { color: inherit; opacity: 0.7; text-decoration: none; font-size: 15px; }
-.setup-link:hover { opacity: 1; }
+.setup-header h1 {
+  font-size: var(--hl-text-lg); font-weight: var(--hl-weight-semibold);
+  margin: 0; letter-spacing: -.01em;
+}
+.setup-link {
+  color: var(--hl-accent); text-decoration: none; font-size: var(--hl-text-sm);
+  font-weight: var(--hl-weight-medium);
+}
+.setup-link:hover { text-decoration: underline; }
 
-.setup-section { margin-top: 28px; }
+.setup-section { margin-top: var(--hl-space-6); }
 .setup-section h2 {
-  font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em;
-  opacity: 0.6; margin: 0 0 12px; font-weight: 700;
+  font-size: var(--hl-text-xs); text-transform: uppercase; letter-spacing: .12em;
+  color: var(--hl-fg-muted); margin: 0 0 var(--hl-space-3);
+  font-weight: var(--hl-weight-semibold);
 }
 
-.setup-modes { display: flex; flex-direction: column; gap: 12px; }
+.setup-modes { display: flex; flex-direction: column; gap: var(--hl-space-3); }
 .setup-mode {
-  display: flex; flex-direction: column; gap: 4px; text-align: left;
-  padding: 16px 18px; border-radius: 12px; cursor: pointer;
-  background: transparent; color: inherit;
-  border: 2px solid currentColor; opacity: 0.55;
-  transition: opacity 0.15s ease, background 0.15s ease;
+  display: flex; flex-direction: column; gap: var(--hl-space-1); text-align: left;
+  padding: var(--hl-space-4); border-radius: var(--hl-radius); cursor: pointer;
+  background: var(--hl-surface); color: var(--hl-fg);
+  border: 1px solid var(--hl-border);
+  transition: background .15s ease, border-color .15s ease;
 }
-.setup-mode:hover { opacity: 0.85; }
-.setup-mode.active { opacity: 1; background: color-mix(in srgb, currentColor 12%, transparent); }
+.setup-mode:hover { background: var(--hl-sunken); }
+/* Selected state uses the accent — this is interaction, not status. */
+.setup-mode.active {
+  border-color: var(--hl-accent-line); background: var(--hl-accent-wash);
+}
+.setup-mode.active .setup-mode-label { color: var(--hl-accent); }
 .setup-mode:disabled { cursor: default; }
-.setup-mode-label { font-size: 19px; font-weight: 700; }
-.setup-mode-hint { font-size: 14px; opacity: 0.7; }
+.setup-mode-label { font-size: var(--hl-text-md); font-weight: var(--hl-weight-semibold); }
+.setup-mode-hint { font-size: var(--hl-text-sm); color: var(--hl-fg-muted); }
 
-.setup-row { display: flex; gap: 40px; flex-wrap: wrap; }
+.setup-row { display: flex; gap: var(--hl-space-6); flex-wrap: wrap; }
 
-.setup-toggle { display: inline-flex; border: 2px solid currentColor; border-radius: 10px; overflow: hidden; }
-.setup-toggle button {
-  background: transparent; color: inherit; border: 0; cursor: pointer;
-  padding: 10px 22px; font: inherit; font-weight: 700; opacity: 0.55;
+.setup-toggle {
+  display: inline-flex; border: 1px solid var(--hl-border);
+  border-radius: var(--hl-radius); overflow: hidden;
 }
-.setup-toggle button.active { opacity: 1; background: color-mix(in srgb, currentColor 16%, transparent); }
+.setup-toggle button {
+  background: var(--hl-surface); color: var(--hl-fg-muted); border: 0;
+  cursor: pointer; padding: 10px 22px;
+  font: var(--hl-weight-semibold) var(--hl-text-sm)/1 var(--hl-font-sans);
+}
+.setup-toggle button:hover { background: var(--hl-sunken); }
+.setup-toggle button.active {
+  color: var(--hl-accent); background: var(--hl-accent-wash);
+}
 
 /* Rotating screens preview (issue #48). */
 .setup-screens-head {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: var(--hl-space-3);
 }
-.setup-clear-all {
-  background: transparent; color: inherit; border: 1px solid currentColor;
-  border-radius: 8px; padding: 4px 12px; font: inherit; font-size: 13px;
-  font-weight: 700; cursor: pointer; opacity: 0.6;
+.setup-clear-all,
+.setup-screen-clear {
+  background: var(--hl-surface); color: var(--hl-fg); border: 1px solid var(--hl-border);
+  border-radius: var(--hl-radius-sm); font-family: var(--hl-font-sans);
+  font-weight: var(--hl-weight-semibold); cursor: pointer;
 }
-.setup-clear-all:hover { opacity: 1; }
+.setup-clear-all { padding: 5px var(--hl-space-3); font-size: var(--hl-text-sm); }
+.setup-screen-clear {
+  margin-left: auto; padding: 3px var(--hl-space-2); font-size: 12px;
+}
+.setup-clear-all:hover,
+.setup-screen-clear:hover { background: var(--hl-sunken); }
 
-.setup-screens-hint { font-size: 13px; opacity: 0.6; margin: 0 0 16px; line-height: 1.55; }
+.setup-screens-hint {
+  font-size: var(--hl-text-sm); color: var(--hl-fg-muted);
+  margin: 0 0 var(--hl-space-4); line-height: 1.55;
+}
 .setup-screens-hint code {
-  font-size: 12px; background: color-mix(in srgb, currentColor 12%, transparent);
-  padding: 1px 5px; border-radius: 4px;
+  font-family: var(--hl-font-mono); font-size: 12px;
+  background: var(--hl-sunken); padding: 1px 5px; border-radius: var(--hl-radius-sm);
 }
 
 .setup-screens {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 18px;
+  gap: var(--hl-space-4);
 }
-.setup-screen { display: flex; flex-direction: column; gap: 8px; }
-.setup-screen.empty { opacity: 0.6; }
+.setup-screen { display: flex; flex-direction: column; gap: var(--hl-space-2); }
+.setup-screen.empty { opacity: .6; }
 
-.setup-screen-meta { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-.setup-screen-slot { font-weight: 700; letter-spacing: 0.04em; }
-.setup-screen-ttl { opacity: 0.7; font-variant-numeric: tabular-nums; }
-.setup-screen-ttl.muted { opacity: 0.45; }
-.setup-screen-clear {
-  margin-left: auto; background: transparent; color: inherit;
-  border: 1px solid currentColor; border-radius: 6px; padding: 2px 10px;
-  font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; opacity: 0.55;
+.setup-screen-meta {
+  display: flex; align-items: center; gap: var(--hl-space-2);
+  font-size: var(--hl-text-sm);
 }
-.setup-screen-clear:hover { opacity: 1; }
+.setup-screen-slot {
+  font-weight: var(--hl-weight-semibold); letter-spacing: var(--hl-tracking-label);
+}
+/* Countdown ticks every second — tabular so its width never changes. */
+.setup-screen-ttl {
+  color: var(--hl-fg-muted); font-family: var(--hl-font-mono);
+  font-variant-numeric: tabular-nums; font-size: 12px;
+}
+/* Nearing expiry is a state worth noticing. */
+.setup-screen-ttl.expiring { color: var(--hl-warn); font-weight: var(--hl-weight-semibold); }
+.setup-screen-ttl.muted { color: var(--hl-fg-subtle); }
 
-/* A faithful fixed-tile grid: every cell is a tile (spaces included), so the
-   blank tiles read black (dark) / white (light) exactly like the wall board. */
+/* ── board preview — EXEMPT from the admin palette ──────────────────────────
+   A faithful fixed-tile grid: every cell is a tile (spaces included), so the
+   blank tiles read black (dark) / white (light) exactly like the wall board.
+   These colours mirror flip.css on purpose and must not become admin greys.  */
 .screen-grid {
   container-type: inline-size;
   display: grid;
   grid-template-columns: repeat(var(--cols), 1fr);
   gap: 1px;
   padding: 6px;
-  border-radius: 6px;
+  border-radius: var(--hl-radius);
 }
 .screen-tile {
   aspect-ratio: 3 / 4;
@@ -120,15 +170,23 @@
   border-radius: 1px;
   overflow: hidden;
 }
-
-/* Tile + blank colors mirror the live display (flip.css). */
 .setup.theme-dark .screen-grid { background: #0d0d0d; }
 .setup.theme-dark .screen-tile { background: #1a1a1a; color: #f0f0f0; }
 .setup.theme-light .screen-grid { background: #f5f5f5; }
 .setup.theme-light .screen-tile { background: #e8e8e8; color: #1a1a1a; }
 
-.setup-note { margin-top: 32px; font-size: 14px; opacity: 0.55; }
+.setup-note { margin-top: var(--hl-space-6); font-size: var(--hl-text-sm); color: var(--hl-fg-muted); }
 .setup-version {
-  margin-top: 8px; font-size: 12px; opacity: 0.4;
-  font-variant-numeric: tabular-nums; word-break: break-all;
+  margin-top: var(--hl-space-2); font-size: 12px; color: var(--hl-fg-subtle);
+  font-family: var(--hl-font-mono); font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}
+
+/* Scoped to /setup only. A global reset would kill the board's flip animation,
+   which is the product rather than decoration. */
+@media (prefers-reduced-motion: reduce) {
+  .setup *, .setup *::before, .setup *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
 }
