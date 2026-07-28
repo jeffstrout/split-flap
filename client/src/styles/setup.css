@@ -10,13 +10,15 @@
  * lie about what the display actually shows.
  */
 @import './tokens.css';
+@import './components.css';
 
 .setup {
   min-height: 100vh;
+  /* A column, not a centring box: the shell header spans the viewport and the
+     card is centred beneath it. Previously .setup WAS the centring box, which
+     is why the heading could only live inside the card. */
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 6vh 16px;
+  flex-direction: column;
   box-sizing: border-box;
   font-family: var(--hl-font-sans);
   font-size: var(--hl-text-base);
@@ -35,26 +37,17 @@
   color: var(--hl-fg);
 }
 
+.setup-body {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 5vh 16px 6vh;
+}
+
 .setup-loading { color: var(--hl-fg-muted); }
 
 .setup-card { width: 100%; max-width: 640px; }
-
-.setup-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--hl-space-4);
-  margin-bottom: var(--hl-space-2);
-}
-.setup-header h1 {
-  font-size: var(--hl-text-lg); font-weight: var(--hl-weight-semibold);
-  margin: 0; letter-spacing: -.01em;
-}
-.setup-link {
-  color: var(--hl-accent); text-decoration: none; font-size: var(--hl-text-sm);
-  font-weight: var(--hl-weight-medium);
-}
-.setup-link:hover { text-decoration: underline; }
 
 .setup-section { margin-top: var(--hl-space-6); }
 .setup-section h2 {
@@ -176,11 +169,6 @@
 .setup.theme-light .screen-tile { background: #e8e8e8; color: #1a1a1a; }
 
 .setup-note { margin-top: var(--hl-space-6); font-size: var(--hl-text-sm); color: var(--hl-fg-muted); }
-.setup-version {
-  margin-top: var(--hl-space-2); font-size: 12px; color: var(--hl-fg-subtle);
-  font-family: var(--hl-font-mono); font-variant-numeric: tabular-nums;
-  word-break: break-all;
-}
 
 /* Scoped to /setup only. A global reset would kill the board's flip animation,
    which is the product rather than decoration. */
