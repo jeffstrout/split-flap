@@ -18,10 +18,14 @@
   --qlock-dot: #000000;
 }
 
-/* Square matrix that scales to fit the viewport, with room for corner dots. */
+/* Square matrix that scales to fit the viewport, with room for corner dots.
+   The font used to be an inline style carrying the language pack's own
+   fontFamily, which only existed so Arabic could bring Cairo (#80). One
+   language, one font — it belongs here with the rest of the board's type. */
 .qlock-matrix {
   position: relative;
   box-sizing: border-box;
+  font-family: 'Roboto Condensed', 'Arial Narrow', sans-serif;
   width: min(88vw, 88vh);
   height: min(88vw, 88vh);
   padding: min(2.2vw, 2.2vh);

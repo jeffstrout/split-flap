@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getLanguage } from '../qlock/lang/index.js';
+import { en } from '../qlock/lang/en.js';
 import { timeToWords } from '../qlock/timeToWords.js';
 import '../styles/qlock.css';
 
@@ -12,15 +12,18 @@ const SHIFT_OFFSETS = [
 ];
 const SHIFT_INTERVAL_MS = 5 * 60 * 1000;
 
-// QLOCKTWO word clock (FR-27, FR-30, FR-32, FR-33, FR-34). Language-aware
-// (issue #33): renders the active language pack's letter matrix, RTL-aware,
-// updating each minute on the minute. Silent by design.
-function QlockTwo({ theme, language = 'en' }) {
+// QLOCKTWO word clock (FR-27, FR-30, FR-32, FR-34). Renders the English letter
+// matrix, updating each minute on the minute. Silent by design.
+//
+// The Arabic pack and the language selection it needed were removed in #80, so
+// the pack is a direct import rather than a registry lookup, and the matrix no
+// longer carries `direction` / `fontFamily` from the pack — English is ltr in
+// the board's own Roboto Condensed, which qlock.css now states outright.
+function QlockTwo({ theme }) {
   const [now, setNow] = useState(() => new Date());
   const [shift, setShift] = useState(0);
 
-  const pack = getLanguage(language);
-  const cols = pack.grid[0].length;
+  const cols = en.grid[0].length;
 
   useEffect(() => {
     let intervalId;
@@ -47,13 +50,11 @@ function QlockTwo({ theme, language = 'en' }) {
     return () => clearInterval(id);
   }, []);
 
-  const { litKeys, dots } = timeToWords(now, pack);
+  const { litKeys, dots } = timeToWords(now, en);
   const [dx, dy] = SHIFT_OFFSETS[shift];
 
   const matrixStyle = {
     '--qlock-cols': cols,
-    direction: pack.dir,
-    fontFamily: pack.fontFamily,
     ...(BURN_IN_ENABLED ? { transform: `translate(${dx}px, ${dy}px)` } : {}),
   };
 
@@ -65,7 +66,7 @@ function QlockTwo({ theme, language = 'en' }) {
         role="img"
         aria-label="word clock"
       >
-        {pack.grid.map((row, r) => (
+        {en.grid.map((row, r) => (
           <div className="qlock-row" key={r}>
             {Array.from(row).map((ch, c) => (
               <span

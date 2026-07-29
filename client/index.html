@@ -9,7 +9,11 @@
     <title>Split-Flap Display</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&family=Cairo:wght@700&display=swap" rel="stylesheet">
+    <!-- Cairo 700 was here for the Arabic word-clock matrix and came out with
+         it (#80). Roboto Condensed remains, and remains a webfont on a display
+         that must keep working with no internet — see the warning in
+         homelab-standards/docs/style-guide.md. Self-hosting it is still open. -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@700&display=swap" rel="stylesheet">
     <!-- Tinted by the route-setup script below: Safari colours its tab/toolbar
          chrome from this, and falls back to the body background when it is
          absent. There was none, so the global kiosk background made the tab bar

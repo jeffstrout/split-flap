@@ -3,11 +3,11 @@ import useWebSocket from './hooks/useWebSocket';
 import { ROWS, COLS } from '@board';
 import './styles/setup.css';
 
-// The three user-facing display modes (issue #35). Each composes the server's
-// mode + qlockLanguage settings into one choice.
+// The two user-facing display modes (issue #35). These were three until the
+// Arabic word clock was removed (#80); with one language left, a mode is just
+// the server's `mode` and the composition it used to need is gone.
 const DISPLAY_MODES = [
-  { id: 'en', label: 'English Word Clock', hint: 'QLOCKTWO — IT IS HALF PAST TEN' },
-  { id: 'ar', label: 'Arabic Word Clock', hint: 'QLOCKTWO — الساعة السادسة' },
+  { id: 'qlock', label: 'Word Clock', hint: 'QLOCKTWO — IT IS HALF PAST TEN' },
   { id: 'flip', label: 'Info Split Flap', hint: 'Split-flap message board' },
 ];
 
@@ -17,11 +17,6 @@ const CONTENT_ROWS = ROWS - 1;
 // In dev the Vite proxy forwards /api -> :3001; in prod it's same-origin.
 const post = (path) => fetch(path, { method: 'POST' });
 const del = (path) => fetch(path, { method: 'DELETE' });
-
-function selectedFrom({ mode, qlockLanguage }) {
-  if (mode === 'flip') return 'flip';
-  return qlockLanguage === 'ar' ? 'ar' : 'en';
-}
 
 // Faithful, static (non-animated) preview of one screen's content area: a
 // CONTENT_ROWS × COLS grid of fixed tiles. A space is a blank tile, not empty
@@ -57,7 +52,7 @@ function formatRemaining(expiresAt, now) {
 }
 
 function Setup() {
-  const [settings, setSettings] = useState(null); // { mode, qlockLanguage, theme, soundEnabled }
+  const [settings, setSettings] = useState(null); // { mode, theme, soundEnabled }
   const [saving, setSaving] = useState(false);
   const [screens, setScreens] = useState(null); // [{ slot, lines, align, expiresAt }]
   const [now, setNow] = useState(() => Date.now());
@@ -73,7 +68,7 @@ function Setup() {
     fetch('/api/settings')
       .then((r) => r.json())
       .then(setSettings)
-      .catch(() => setSettings({ mode: 'qlock', qlockLanguage: 'en', theme: 'dark', soundEnabled: true }));
+      .catch(() => setSettings({ mode: 'qlock', theme: 'dark', soundEnabled: true }));
     fetch('/api/screens')
       .then((r) => r.json())
       .then((d) => setScreens(d.slots))
@@ -108,15 +103,12 @@ function Setup() {
   // fixes the one declaration this effect never touched, the background behind
   // Safari's tab bar.
 
+  // One call now. It was two — set the language, then set the mode — because a
+  // mode card encoded both (#80).
   const chooseDisplayMode = useCallback(async (id) => {
     setSaving(true);
     try {
-      if (id === 'flip') {
-        await post('/api/mode/flip');
-      } else {
-        await post(`/api/qlock/language/${id}`);
-        await post('/api/mode/qlock');
-      }
+      await post(`/api/mode/${id}`);
     } finally {
       setSaving(false);
     }
@@ -136,7 +128,7 @@ function Setup() {
     );
   }
 
-  const selected = selectedFrom(settings);
+  const selected = settings.mode;
   const themeClass = settings.theme === 'light' ? 'theme-light' : 'theme-dark';
   const anyPopulated = (screens || []).some((s) => s.lines);
 

@@ -16,7 +16,6 @@ function broadcastSettings() {
       soundEnabled: state.soundEnabled,
       theme: state.theme,
       mode: state.mode,
-      qlockLanguage: state.qlockLanguage
     }
   });
 }
@@ -228,27 +227,10 @@ router.post('/mode/qlock', (req, res) => {
   res.json({ success: true, mode: 'qlock' });
 });
 
-// GET /api/qlock/language - Get the QLOCKTWO word-clock language
-router.get('/qlock/language', (req, res) => {
-  res.json({ qlockLanguage: state.qlockLanguage });
-});
-
-// POST /api/qlock/language/en|ar - Set the QLOCKTWO language
-router.post('/qlock/language/:lang', (req, res) => {
-  const { lang } = req.params;
-  if (lang !== 'en' && lang !== 'ar') {
-    return res.status(400).json({ error: "language must be 'en' or 'ar'" });
-  }
-  state.qlockLanguage = lang;
-  broadcastSettings();
-  res.json({ success: true, qlockLanguage: lang });
-});
-
 // GET /api/settings - Consolidated current settings (for the setup screen)
 router.get('/settings', (req, res) => {
   res.json({
     mode: state.mode,
-    qlockLanguage: state.qlockLanguage,
     theme: state.theme,
     soundEnabled: state.soundEnabled
   });

@@ -18,12 +18,6 @@ const DEFAULT_MODE = VALID_MODES.includes(process.env.DEFAULT_MODE)
   ? process.env.DEFAULT_MODE
   : 'qlock';
 
-// Default QLOCKTWO language on boot (issue #33).
-const VALID_LANGS = ['en', 'ar'];
-const DEFAULT_QLOCK_LANG = VALID_LANGS.includes(process.env.DEFAULT_QLOCK_LANG)
-  ? process.env.DEFAULT_QLOCK_LANG
-  : 'en';
-
 // CORS configuration
 const defaultOrigins = [
   'http://localhost:3000',
@@ -59,8 +53,7 @@ export const state = {
   rotateInterval: null,
   soundEnabled: true,
   theme: 'dark', // 'dark' = black bg/white text, 'light' = white bg/black text
-  mode: DEFAULT_MODE, // 'flip' = split-flap board, 'qlock' = QLOCKTWO word clock
-  qlockLanguage: DEFAULT_QLOCK_LANG // 'en' | 'ar' — QLOCKTWO word-clock language
+  mode: DEFAULT_MODE // 'flip' = split-flap board, 'qlock' = QLOCKTWO word clock
 };
 
 // Restore persisted state (NFR-8) — overrides defaults when enabled.
@@ -70,7 +63,8 @@ if (persisted) {
   if (VALID_MODES.includes(persisted.mode)) state.mode = persisted.mode;
   if (['dark', 'light'].includes(persisted.theme)) state.theme = persisted.theme;
   if (typeof persisted.soundEnabled === 'boolean') state.soundEnabled = persisted.soundEnabled;
-  if (VALID_LANGS.includes(persisted.qlockLanguage)) state.qlockLanguage = persisted.qlockLanguage;
+  // A persisted `qlockLanguage` from before #80 is simply ignored: a Pi left in
+  // Arabic comes back as the word clock rather than failing to boot.
 }
 startPersistence(state);
 
@@ -124,7 +118,6 @@ wss.on('connection', (ws) => {
       soundEnabled: state.soundEnabled,
       theme: state.theme,
       mode: state.mode,
-      qlockLanguage: state.qlockLanguage
     }
   }));
   // Current rotating-screen slots, so /setup can render its previews on load.
