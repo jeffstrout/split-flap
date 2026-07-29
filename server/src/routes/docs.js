@@ -1,22 +1,23 @@
-// GET /api/docs — a self-contained API reference.
+// GET /api/docs — the fleet's shared API reference page.
 //
-// The two Python appliances get Swagger from FastAPI; Express has no
-// equivalent, and the reference has until now lived in CLAUDE.md on GitHub —
-// useless on a LAN with no internet, which is exactly when you reach for it.
-// The homelab shell-header contract requires an "API docs" link on every
-// appliance (jeffstrout/homelab-standards#5), so it has to resolve to something
-// that works offline.
+// Same page, same path, same shape on every appliance
+// (jeffstrout/homelab-standards docs/style-guide.md). The two FastAPI boxes
+// render theirs from app.openapi(); this one declares its list, because Express
+// has no schema to introspect. That difference is invisible on the page and is
+// the only reason this file holds endpoint prose at all — keep GROUPS in step
+// with the routers when you add an endpoint.
 //
-// Deliberately dependency-free: no stylesheet link, no fonts, no client bundle.
-// It renders from a cold cache on a network with no route to anywhere, which is
-// the whole reason it exists. That means it repeats a handful of token values
-// inline rather than importing tokens.css — the one place in this repo where
-// duplicating them is the correct call, because the alternative is a page that
-// fails in the situation it was written for.
+// The fleet converged ON this page rather than away from it. It was the only
+// API reference that worked offline, which is why the other two dropped Swagger
+// from their header links: swagger-ui loads from cdn.jsdelivr.net and renders
+// an empty shell with no route out (jeffstrout/homelab-standards#7).
 //
-// Note: FastAPI's /docs pulls swagger-ui from jsdelivr, so ac-monitor's and
-// syslog's API docs are the ones that actually break offline. Tracked in
-// jeffstrout/homelab-standards#7.
+// It used to inline a partial copy of the design tokens, which was correct at
+// the time — the client's CSS lives in the Vite bundle, so there was no served
+// stylesheet to link. server/static now carries the vendored tokens.css and
+// components.css, so this links the same two files the other appliances do and
+// the duplication is gone. Still zero external requests, which is the property
+// that matters and must not regress.
 
 import { Router } from 'express';
 import { ROWS, COLS } from '../config.js';
@@ -26,6 +27,8 @@ const router = Router();
 const GROUPS = [
   {
     name: 'Health & build',
+    blurb:
+      'Liveness, provenance and the consolidated settings the setup screen reads.',
     endpoints: [
       ['GET', '/api/health', 'Liveness probe: status, uptime, connected clients, mode, commit.'],
       ['GET', '/api/version', 'The running build — commit and build time, baked in by CI.'],
@@ -35,6 +38,8 @@ const GROUPS = [
   },
   {
     name: 'Board content',
+    blurb:
+      'Set what the board shows. Every change is broadcast to all connected displays.',
     endpoints: [
       ['POST', '/api/message', 'Set board content. Body: { lines: string[], align?: "left"|"center" }.'],
       ['GET', '/api/message', 'Current board content.'],
@@ -43,6 +48,8 @@ const GROUPS = [
   },
   {
     name: 'Rotating screens',
+    blurb:
+      'Up to 6 slots rotate in the top 7 rows during flip mode, 15 seconds each. Pushed data expires 15 minutes after its last push.',
     endpoints: [
       ['POST', '/api/screens/:slot', 'Push { lines, align } to slot 1–6; resets that slot’s 15-minute TTL.'],
       ['GET', '/api/screens', 'All slots with content, align, expiresAt and secondsRemaining.'],
@@ -53,6 +60,8 @@ const GROUPS = [
   },
   {
     name: 'Display mode',
+    blurb:
+      'Switch every display between the split-flap board and the word clock.',
     endpoints: [
       ['GET', '/api/mode', 'Current mode: "flip" or "qlock".'],
       ['POST', '/api/mode/flip', 'Switch every display to the split-flap board.'],
@@ -61,6 +70,8 @@ const GROUPS = [
   },
   {
     name: 'Clock & appearance',
+    blurb:
+      'The legacy minute clock, plus theme and flip-sound settings.',
     endpoints: [
       ['GET', '/api/test', 'Render the current date and time to the board once.'],
       ['POST', '/api/clock/start', 'Start the legacy minute clock.'],
@@ -78,78 +89,87 @@ const GROUPS = [
 const esc = (s) =>
   String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
-const METHOD_COLOUR = { GET: '#1a7f37', POST: '#0969da', DELETE: '#cf222e' };
+// Consequence, not the GET-green/POST-blue convention: a blue POST badge is a
+// label, not something you can act on, and blue is reserved for things that are
+// (homelab-standards docs/style-guide.md). safe / mutates / destroys.
+const METHOD_MOD = { GET: 'get', HEAD: 'get', POST: 'post', PUT: 'post', PATCH: 'post', DELETE: 'delete' };
+
+const BUILD = {
+  commit: process.env.APP_COMMIT || 'dev',
+  builtAt: process.env.APP_BUILD_TIME || 'unknown',
+};
 
 function render() {
-  const groups = GROUPS.map(
-    (g) => `<section>
-      <h2>${esc(g.name)}</h2>
-      <table>
-        <tbody>
+  const total = GROUPS.reduce((n, g) => n + g.endpoints.length, 0);
+
+  const sections = GROUPS.map(
+    (g) => `<section class="hl-section">
+      <h2 class="hl-section-title">${esc(g.name)}</h2>
+      ${g.blurb ? `<p class="hl-note">${esc(g.blurb)}</p>` : ''}
+      <div class="hl-table-wrap"><table class="hl-table"><tbody>
         ${g.endpoints
           .map(
             ([method, path, desc]) => `<tr>
-              <td><span class="m" style="color:${METHOD_COLOUR[method]}">${esc(method)}</span></td>
-              <td><code>${esc(path)}</code></td>
-              <td class="d">${esc(desc)}</td>
+              <td><span class="hl-method hl-method--${METHOD_MOD[method] || 'get'}">${esc(method)}</span></td>
+              <td><code class="hl-code">${esc(path)}</code></td>
+              <td>${esc(desc)}</td>
             </tr>`
           )
           .join('')}
-        </tbody>
-      </table>
+      </tbody></table></div>
     </section>`
   ).join('');
 
+  const build = [BUILD.commit, BUILD.builtAt !== 'unknown' ? BUILD.builtAt.slice(0, 10) : '']
+    .filter(Boolean)
+    .join(' · ');
+
   return `<!doctype html>
-<html lang="en"><head>
+<html lang="en">
+<head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Split-Flap Display — API</title>
+<meta name="theme-color" content="#f6f8fa">
+<!-- Vendored and served by this process. No CDN: this page has to render on a
+     LAN with no route to anywhere, which is when it is needed most. -->
+<link rel="stylesheet" href="/static/tokens.css">
+<link rel="stylesheet" href="/static/components.css">
 <style>
-  :root {
-    --canvas:#f6f8fa; --surface:#fff; --border:#d0d7de; --fg:#1f2328; --fg-muted:#59636e;
-    --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  body {
+    margin: 0; background: var(--hl-canvas); color: var(--hl-fg);
+    font: var(--hl-text-base)/var(--hl-leading) var(--hl-font-sans);
   }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--canvas);color:var(--fg);font:14px/1.5 var(--sans)}
-  header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;
-         background:var(--surface);border-bottom:1px solid var(--border)}
-  header h1{font-size:16px;font-weight:600;margin:0}
-  header a{color:#0969da;text-decoration:none;font-size:13px;font-weight:500;margin-left:auto}
-  header a:hover{text-decoration:underline}
-  main{max-width:820px;margin:0 auto;padding:24px 16px 40px}
-  p.lead{color:var(--fg-muted);margin:0 0 24px}
-  h2{font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;
-     color:var(--fg-muted);margin:28px 0 8px}
-  table{width:100%;border-collapse:collapse;background:var(--surface);
-        border:1px solid var(--border);border-radius:6px;overflow:hidden}
-  td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top}
-  tr:last-child td{border-bottom:0}
-  .m{font-family:var(--mono);font-size:12px;font-weight:600;white-space:nowrap}
-  code{font-family:var(--mono);font-size:13px;white-space:nowrap}
-  .d{color:var(--fg-muted);width:55%}
-  @media (max-width:640px){
-    table,tbody,tr,td{display:block;width:auto}
-    td{border-bottom:0;padding:2px 12px}
-    tr{border-bottom:1px solid var(--border);padding:8px 0}
-    .d{width:auto}
-  }
+  .hl-table td { vertical-align: top; }
+  .hl-table td:nth-child(3) { color: var(--hl-fg-muted); }
 </style>
-</head><body>
-<header>
-  <h1>Split-Flap Display — API</h1>
-  <a href="/setup">&larr; Back to setup</a>
+</head>
+<body>
+<header class="hl-header">
+  <h1 class="hl-header-name">Split-Flap Display — API</h1>
+  <span class="hl-header-spacer"></span>
+  <nav class="hl-header-nav">
+    <a class="hl-header-link" href="/setup">&larr; Setup</a>
+    <a class="hl-header-link" href="/api/health" target="_blank" rel="noopener">Health</a>
+    <a class="hl-header-link" href="/api/screens" target="_blank" rel="noopener">Screens&nbsp;JSON</a>
+    <a class="hl-header-link" href="/">View display &rarr;</a>
+  </nav>
 </header>
-<main>
-  <p class="lead">
+<main class="hl-page">
+  <p class="hl-note">
     Board is ${ROWS} rows &times; ${COLS} columns. Lines are uppercased and
     padded or truncated to ${COLS} characters. Every state change is broadcast to
     all connected displays over WebSocket.
   </p>
-  ${groups}
+  ${sections}
 </main>
-</body></html>`;
+<footer class="hl-footer">
+  <span class="hl-num">${total}</span>&nbsp;endpoints
+  <span class="hl-footer-spacer"></span>
+  <span class="hl-footer-meta">${esc(build || 'dev')}</span>
+</footer>
+</body>
+</html>`;
 }
 
 router.get('/docs', (req, res) => {

@@ -3,6 +3,7 @@ import cors from 'cors';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import messagesRouter, { startInfoScreen, screensPayload } from './routes/messages.js';
 import docsRouter from './routes/docs.js';
 import { ROWS, COLS } from './config.js';
@@ -10,6 +11,11 @@ import { loadPersisted, startPersistence } from './persistence.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// ESM has no __dirname. Needed to resolve server/static regardless of the cwd
+// the process was started from — npm start runs from server/, the Docker image
+// runs from /app/server, and a dev might run it from the repo root.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Default display mode on boot (FR-25). Falls back to 'qlock' for any
 // unrecognized value so the wall display rests on the word clock.
@@ -76,6 +82,15 @@ if (state.mode === 'flip') startInfoScreen();
 // parameterised route added there later.
 app.use('/api', docsRouter);
 app.use('/api', messagesRouter);
+
+// The shared design tokens, served at the same path as on the two FastAPI
+// appliances so /api/docs links the identical two stylesheets everywhere.
+// Vendored into server/ rather than fetched — the LAN guarantees nothing,
+// including itself — and served from here rather than the client bundle so the
+// page keeps working with no build step and no external request.
+//
+// Registered before the SPA fallback below, which would otherwise swallow it.
+app.use('/static', express.static(path.join(__dirname, '..', 'static')));
 
 // Serve the built client from a single container (Docker / Raspberry Pi).
 // CLIENT_DIST points at the Vite build output; when unset (local dev) Vite

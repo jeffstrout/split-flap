@@ -1,0 +1,129 @@
+/* ============================================================================
+   Homelab appliance design tokens — v1
+   Single source of truth for the look of every management surface.
+
+   Direction: "Primer" (option A, chosen 2026-07-27). Derived from the palette
+   already live on syslog-ai-monitor's dashboard rather than invented, so one of
+   the three surfaces needed no visual migration.
+
+   LIGHT ONLY, deliberately. Control surfaces are read in a lit room, often at a
+   glance, and one palette means one set of contrast decisions to verify. The
+   split-flap *display* is exempt from this file entirely (see style-guide.md).
+
+   Import before your own stylesheet, then style through the variables. Never
+   hard-code a hex that exists here — that is how three apps drift apart.
+
+   Namespaced --hl-* so it cannot collide with an app's own custom properties
+   (split-flap already defines --board-rows / --board-cols).
+   ============================================================================ */
+
+:root {
+  /* ── surfaces ──────────────────────────────────────────────────────────────
+     Three levels, not two. A card-based control surface needs its cards to read
+     as *raised*, so the page ground is the grey and the cards are white — the
+     pattern syslog's dashboard already uses. Getting this backwards inverts the
+     whole look while every individual value stays "correct".                  */
+  --hl-canvas:        #f6f8fa;   /* page ground — recessed */
+  --hl-surface:       #ffffff;   /* raised: cards, banners, tiles, rows */
+  --hl-sunken:        #eef1f4;   /* inset: code blocks, evidence, hover */
+  --hl-border:        #d0d7de;   /* all hairlines */
+  --hl-border-strong: #afb8c1;   /* emphasis, focused input */
+
+  /* ── text ──────────────────────────────────────────────────────────────── */
+  --hl-fg:            #1f2328;   /* body + numbers */
+  --hl-fg-muted:      #59636e;   /* labels, secondary, units */
+  --hl-fg-subtle:     #818b98;   /* placeholder, disabled */
+  --hl-fg-on-accent:  #ffffff;
+
+  /* ── accent — interaction only, never status ───────────────────────────── */
+  --hl-accent:        #0969da;
+  --hl-accent-hover:  #0757ba;
+  --hl-accent-wash:   rgba(9, 105, 218, .08);
+  --hl-accent-line:   rgba(9, 105, 218, .40);
+
+  /* ── semantic — status only, never decoration ──────────────────────────── */
+  --hl-ok:            #1a7f37;
+  --hl-ok-wash:       rgba(26, 127, 55, .08);
+  --hl-warn:          #9a6700;
+  --hl-warn-wash:     rgba(154, 103, 0, .08);
+  --hl-crit:          #cf222e;
+  --hl-crit-wash:     rgba(207, 34, 46, .07);
+  --hl-crit-strong:   #a40e26;   /* critical, distinct from error */
+  /* Neutral slate, NOT the accent blue. A state that is neither good nor bad
+     gets a neutral colour, so every saturated hue on the surface means exactly
+     one thing: blue = you can act on this, green/amber/red = this needs your
+     attention. This token was #0969da — identical to --hl-accent — which put a
+     blue "Cooling" status pill next to a blue "Save" button and destroyed that
+     distinction. Purple was considered and rejected: it sits within 1.03:1
+     luminance of the accent, so the two are near-indistinguishable to exactly
+     the reader the redundant-dot rule exists to protect. */
+  --hl-info:          #4c5561;   /* 6.69:1 on its own wash, 7.10:1 on canvas */
+  --hl-info-wash:     rgba(76, 85, 97, .08);
+
+  /* ── layout ────────────────────────────────────────────────────────────────
+     One content width for the fleet. This was the last thing every appliance
+     still chose for itself — 980px, 760px and 640px on three surfaces that are
+     meant to read as one application — so it is a token now rather than a
+     number each app picks. .hl-page and .hl-footer both measure from it, which
+     is what keeps the footer rule aligned with the content above it.         */
+  --hl-page-max:      960px;
+
+  /* ── radii ─────────────────────────────────────────────────────────────── */
+  --hl-radius-sm:     4px;       /* chips, inputs */
+  --hl-radius:        6px;       /* default: cards, buttons, tiles */
+  --hl-radius-lg:     10px;      /* modals, outer containers */
+  --hl-radius-pill:   999px;     /* status pills, switches */
+
+  /* ── spacing (4px base) ────────────────────────────────────────────────── */
+  --hl-space-1:       4px;
+  --hl-space-2:       8px;
+  --hl-space-3:       12px;
+  --hl-space-4:       16px;
+  --hl-space-5:       24px;
+  --hl-space-6:       32px;
+
+  /* ── type ──────────────────────────────────────────────────────────────────
+     System stacks only. Everything here runs LAN-only with no guaranteed
+     internet, and syslog's dashboard has no build step — a webfont is a
+     dependency that fails silently during an outage, which is exactly when a
+     monitoring surface must still be readable.                                */
+  --hl-font-sans:  system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+                   Arial, sans-serif;
+  --hl-font-mono:  ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+                   "Liberation Mono", monospace;
+
+  --hl-text-xs:       11px;      /* eyebrow labels */
+  --hl-text-sm:       13px;      /* secondary, table body */
+  --hl-text-base:     14px;      /* body */
+  --hl-text-md:       16px;      /* section headings */
+  --hl-text-lg:       20px;      /* page heading */
+  --hl-text-metric:   24px;      /* stat tile values */
+
+  --hl-weight-normal:   400;
+  --hl-weight-medium:   500;
+  --hl-weight-semibold: 600;
+
+  --hl-leading-tight: 1.25;
+  --hl-leading:       1.5;
+  --hl-tracking-label: .02em;
+
+  /* ── elevation + focus ─────────────────────────────────────────────────── */
+  --hl-shadow:       0 1px 2px rgba(31, 35, 40, .07);
+  --hl-shadow-lg:    0 8px 24px -12px rgba(31, 35, 40, .28);
+  --hl-focus-ring:   0 0 0 3px var(--hl-accent-wash);
+}
+
+/* This file is values only — no component classes.
+   The shapes those values are meant to build live in components.css, which is
+   the other half of the system. Import both.
+
+   They used to be one file, and the component half went unused: all three
+   appliances hand-rolled their own pill, label and table while importing the
+   shared ones. Splitting them makes "did you adopt the components?" a question
+   with a visible answer.
+
+   NOTE: no global prefers-reduced-motion reset here, deliberately.
+   A `* { animation-duration: 0 !important }` rule is not a token — it is a
+   global side effect, and this file gets bundled app-wide. In split-flap that
+   would disable the split-flap animation itself, which is the product.
+   components.css scopes the preference to .hl-* instead. */
