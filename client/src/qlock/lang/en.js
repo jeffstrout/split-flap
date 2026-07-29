@@ -28,10 +28,11 @@ function compose({ bucket, hourCurrent, hourNext, showPrefix }) {
   return out;
 }
 
+// `dir` and `fontFamily` are gone (#80). They existed so the renderer could
+// switch direction and font per language, which only Arabic ever needed; the
+// board is ltr in Roboto Condensed and qlock.css says so directly.
 export const en = {
   id: 'en',
-  dir: 'ltr',
-  fontFamily: "'Roboto Condensed', sans-serif",
   grid: GRID,
   words: WORDS,
   wordText: WORD_TEXT,

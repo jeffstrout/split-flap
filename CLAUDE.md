@@ -12,14 +12,16 @@ A retro split-flap display web application with real-time updates via WebSocket.
 
 ## Display Modes & Setup
 
-The display runs in one of three user-facing modes, settable from the setup
-screen or the API. Each composes the server's `mode` + `qlockLanguage` settings:
+The display runs in one of two user-facing modes, settable from the setup
+screen or the API:
 
-| Mode | `mode` | `qlockLanguage` |
-|------|--------|-----------------|
-| English Word Clock | `qlock` | `en` |
-| Arabic Word Clock (RTL) | `qlock` | `ar` |
-| Info Split Flap | `flip` | — |
+| Mode | `mode` |
+|------|--------|
+| Word Clock | `qlock` |
+| Info Split Flap | `flip` |
+
+There were three until the Arabic word clock and the `qlockLanguage` setting
+were removed (#80); a mode is now just `mode`.
 
 - In **Info Split Flap** mode the bottom row shows the day/month/date
   (left-justified) and the 24-hour `HH:MM:SS` time (right-justified),
@@ -162,7 +164,6 @@ doctl apps logs <app-id> api --type run
 | `TZ` | Server/container | IANA timezone for the info-screen clock (e.g. `America/Chicago`). Defaults to UTC; `tzdata` is in the image |
 | `ALLOWED_ORIGINS` | Server | CORS origins (default: localhost:3000,3001) |
 | `DEFAULT_MODE` | Server | Boot mode `flip`\|`qlock` (default: `qlock`) |
-| `DEFAULT_QLOCK_LANG` | Server | Boot word-clock language `en`\|`ar` (default: `en`) |
 | `PERSIST_FILE` | Server | State file path. On by default (`server/.state.json`); set to `off` to disable |
 | `CLIENT_DIST` | Server | Path to the built client to serve on the same port. Unset = static serving off (dev). Set to `/app/client/dist` in the Docker image |
 | `HOST_PORT` | Compose | Host port mapped to the container's 3001 (default: `8080`; used by `docker-compose.yml`) |
@@ -251,19 +252,11 @@ Theme is **dark by default**.
 | `POST` | `/api/mode/flip` | Switch all displays to the split-flap board |
 | `POST` | `/api/mode/qlock` | Switch all displays to the QLOCKTWO word clock |
 
-### Word-clock language
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/qlock/language` | Get word-clock language |
-| `POST` | `/api/qlock/language/en` | English word clock |
-| `POST` | `/api/qlock/language/ar` | Arabic word clock (RTL) |
-
 ### Settings & health
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/settings` | Consolidated `{ mode, qlockLanguage, theme, soundEnabled }` (used by `/setup`) |
+| `GET` | `/api/settings` | Consolidated `{ mode, theme, soundEnabled }` (used by `/setup`) |
 | `GET` | `/api/version` | Running build `{ version, commit, builtAt }` (baked in by CI; shown on `/setup`) |
 | `GET` | `/api/health` | Liveness/readiness probe `{ status, uptime, connectedClients, mode, commit }` |
 
@@ -307,7 +300,7 @@ The server pushes state to all connected clients via WebSocket. Two message type
 
 Each line is exactly 24 characters, padded with spaces. Always 8 lines.
 
-### `settings` — Sound, theme, mode, language
+### `settings` — Sound, theme, mode
 
 ```json
 {
@@ -315,13 +308,12 @@ Each line is exactly 24 characters, padded with spaces. Always 8 lines.
   "data": {
     "soundEnabled": true,
     "theme": "dark",
-    "mode": "qlock",
-    "qlockLanguage": "en"
+    "mode": "qlock"
   }
 }
 ```
 
-Sent on connect and whenever sound, theme, mode, or word-clock language changes.
+Sent on connect and whenever sound, theme, or mode changes.
 
 ### `screens` — Rotating-screen slots (issue #48)
 
@@ -347,12 +339,12 @@ rendering `message`; `/setup` uses it to render the live slot previews.
 Board dimensions have a single source of truth: `server/src/config.js`
 (`ROWS`, `COLS` = 8 x 24). The client imports it at build time via the Vite
 `@board` alias (inlined into the bundle); CSS reads `--board-rows`/`--board-cols`
-set from it in `main.jsx`. The QLOCKTWO letter matrices live in
-`client/src/qlock/lang/{en,ar}.js`.
+set from it in `main.jsx`. The QLOCKTWO letter matrix lives in
+`client/src/qlock/lang/en.js`.
 
 ### Persistence
 
-State (last message + mode/language/theme/sound) is persisted **on by default**
+State (last message + mode/theme/sound) is persisted **on by default**
 to `server/.state.json` and restored on boot, so the display returns in the mode
 it was last set to. Override the path with `PERSIST_FILE=<path>`, or disable with
 `PERSIST_FILE=off`. (`server/src/persistence.js`)
@@ -387,9 +379,9 @@ chrome.exe --kiosk http://localhost:3000
 - `client/src/App.jsx` - Path router (`/` display, `/setup` config)
 - `client/src/Display.jsx` - Live display: WebSocket state + active-mode render
 - `client/src/Setup.jsx` - Setup/config screen (mode, theme, sound) + live view-only previews of the 6 rotating-screen slots
-- `client/src/components/QlockTwo.jsx` - QLOCKTWO word clock (EN/AR, RTL)
+- `client/src/components/QlockTwo.jsx` - QLOCKTWO word clock
 - `client/src/components/Controls.jsx` - On-screen sound/theme controls
-- `client/src/qlock/` - Word-clock matrices (`lang/en.js`, `lang/ar.js`) + `timeToWords.js`
+- `client/src/qlock/` - Word-clock matrix (`lang/en.js`) + `timeToWords.js`
 - `client/src/components/FlipBoard.jsx` - Board container + audio synthesis
 - `client/src/components/FlipRow.jsx` - Row of characters, maps text to FlipChar
 - `client/src/components/FlipChar.jsx` - Individual character flip animation

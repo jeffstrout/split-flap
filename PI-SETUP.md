@@ -22,9 +22,8 @@ curl -fsSL https://gist.githubusercontent.com/jeffstrout/be50eefa386d272ec5225a5
 ```
 
 That pulls the script from a public gist, so nothing has to be copied from
-another machine. To change the defaults, download it first and edit the four
-variables at the top (`TZ_NAME`, `HOST_PORT`, `DEFAULT_MODE`,
-`DEFAULT_QLOCK_LANG`) before running — or just accept them and adjust later at
+another machine. To change the defaults, download it first and edit the three
+variables at the top (`TZ_NAME`, `HOST_PORT`, `DEFAULT_MODE`) before running — or just accept them and adjust later at
 `/setup`:
 
 ```bash

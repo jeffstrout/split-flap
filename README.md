@@ -4,10 +4,9 @@ A retro split-flap (Solari board) web display with real-time updates over
 WebSocket. Runs as a **single Docker container** — one command on a Raspberry
 Pi, plug the Pi into a monitor over HDMI, and you have a wall display.
 
-Three display modes, switchable from the setup screen or the API:
+Two display modes, switchable from the setup screen or the API:
 
-- **English Word Clock** — QLOCKTWO-style word clock
-- **Arabic Word Clock** — right-to-left, Modern Standard Arabic
+- **Word Clock** — QLOCKTWO-style word clock
 - **Info Split-Flap** — animated split-flap board showing the date + 24h clock
 
 ---
@@ -96,7 +95,6 @@ defaults below apply.
 | `HOST_PORT` | `8080` | Host port the display + API are served on |
 | `TZ` | `UTC` | Timezone for the clock, IANA name (e.g. `America/Chicago`). Set this or the clock shows UTC |
 | `DEFAULT_MODE` | `qlock` | Boot mode: `qlock` (word clock) or `flip` (split-flap) |
-| `DEFAULT_QLOCK_LANG` | `en` | Word-clock language: `en` or `ar` (Arabic, RTL) |
 | `PERSIST_FILE` | `/data/.state.json` | State file on the volume; `off` to disable |
 | `IMAGE_TAG` | `latest` | GHCR image tag to run; pin to `sha-<short>` to freeze/rollback |
 | `WATCHTOWER_POLL_INTERVAL` | `1200` | Seconds between auto-update checks (~20 min) |
@@ -173,7 +171,6 @@ Full endpoint reference is in [CLAUDE.md](CLAUDE.md#api-endpoints). Common ones
 ```bash
 curl -X POST http://<pi-ip>:8080/api/mode/qlock        # word clock
 curl -X POST http://<pi-ip>:8080/api/mode/flip         # split-flap board
-curl -X POST http://<pi-ip>:8080/api/qlock/language/ar # Arabic word clock
 curl -X POST http://<pi-ip>:8080/api/message \
   -H 'Content-Type: application/json' \
   -d '{"lines":["HELLO WORLD"],"align":"center"}'

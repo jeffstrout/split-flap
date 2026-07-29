@@ -30,7 +30,7 @@ const GROUPS = [
       ['GET', '/api/health', 'Liveness probe: status, uptime, connected clients, mode, commit.'],
       ['GET', '/api/version', 'The running build — commit and build time, baked in by CI.'],
       ['GET', '/api/status', 'Connected client count and board dimensions.'],
-      ['GET', '/api/settings', 'Consolidated mode, qlockLanguage, theme, soundEnabled.'],
+      ['GET', '/api/settings', 'Consolidated mode, theme, soundEnabled.'],
     ],
   },
   {
@@ -57,9 +57,6 @@ const GROUPS = [
       ['GET', '/api/mode', 'Current mode: "flip" or "qlock".'],
       ['POST', '/api/mode/flip', 'Switch every display to the split-flap board.'],
       ['POST', '/api/mode/qlock', 'Switch every display to the word clock.'],
-      ['GET', '/api/qlock/language', 'Word-clock language.'],
-      ['POST', '/api/qlock/language/en', 'English word clock.'],
-      ['POST', '/api/qlock/language/ar', 'Arabic word clock (RTL).'],
     ],
   },
   {
