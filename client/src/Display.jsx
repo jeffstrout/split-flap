@@ -46,6 +46,15 @@ function Display() {
     }
   }, [lastMessage]);
 
+  // Keep Safari's tab/toolbar chrome on the board's own theme. index.html sets
+  // this before first paint from the route alone; the theme is user-settable
+  // and arrives over the WebSocket, so a light board would otherwise sit under
+  // dark browser chrome. The values match .app / .app.theme-light in flip.css.
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', theme === 'light' ? '#f5f5f5' : '#0d0d0d');
+  }, [theme]);
+
   return (
     <div className={`app ${theme === 'light' ? 'theme-light' : 'theme-dark'}`}>
       {mode === 'qlock' ? (
