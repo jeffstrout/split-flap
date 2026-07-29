@@ -437,7 +437,7 @@ chrome.exe --kiosk http://localhost:3000
 
 ### GitHub Integration
 
-- **PR review workflow**: `.github/workflows/pr-claude-code-review.yml` — auto-reviews PRs using Claude (requires `ANTHROPIC_API_KEY` repo secret)
+- **PR review workflow**: `.github/workflows/pr-claude-code-review.yml` — auto-reviews PRs using Claude (requires a working `ANTHROPIC_API_KEY` repo secret). **Advisory, not a gate**: the step is `continue-on-error: true`, so a broken reviewer cannot fail a PR whose tests pass. `Tests` is the gate. Currently broken — see #74
 - **Issue template**: `.github/ISSUE_TEMPLATE/ai-task.yml` — structured template for AI tasks
 - **Labels**: `ai-ready`, `ai-in-progress`, `ai-review`, `ai-failed`, `needs-clarification`
 - **Briefing doc**: `.claude/docs/autonomous-workflow-briefing.md`
@@ -470,5 +470,8 @@ Edits on `main` are blocked by a PreToolUse hook. Always work on a feature branc
 - [x] Set up GitHub Actions for automated PR review (`pr-claude-code-review.yml`)
 - [x] Add GitHub Issue templates (`ai-task.yml`)
 - [x] Add GitHub labels (`ai-ready`, `ai-in-progress`, `ai-review`, `ai-failed`, `needs-clarification`)
-- [ ] Add `ANTHROPIC_API_KEY` as GitHub repo secret (required for PR review workflow)
+- [ ] **Replace** the `ANTHROPIC_API_KEY` repo secret — it exists (added 2026-02-13) but the
+      review call is rejected before it runs: one turn, `$0` spent, `is_error: true`, 0.35s
+      after init. Expired, revoked, out of credit, or no access to the model the action
+      defaults to. Adding the secret is *not* the fix; it is already there (#74)
 - [ ] Test `start.sh` / `stop.sh` / `status.sh` on a clean machine
