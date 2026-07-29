@@ -42,8 +42,25 @@ jobs:
             echo "base_ref=$BASE_REF" >> $GITHUB_OUTPUT
           fi
 
+      # An advisory reviewer must not gate a PR whose tests pass.
+      #
+      # This step has failed on every PR since 2026-07-19 (#74). The call dies
+      # 0.35s after init -- one turn, $0 spent, is_error:true -- so it is
+      # rejected before any review happens. The ANTHROPIC_API_KEY secret exists,
+      # which points at the key itself: expired, revoked, out of credit, or
+      # without access to the model the action defaults to.
+      #
+      # The result was a red X on every PR while `Tests` was green, which trains
+      # you to merge past a failing check -- worse than having no reviewer,
+      # because the day a real check fails it looks exactly the same.
+      #
+      # So the reviewer is advisory: it still runs, still posts, and its failure
+      # is still visible in the job list, but it no longer marks the PR failed.
+      # `Tests` remains the gate. Remove this line once #74 is fixed and a
+      # broken reviewer should shout again.
       - name: Claude Code Review
         uses: anthropics/claude-code-action@v1
+        continue-on-error: true
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
