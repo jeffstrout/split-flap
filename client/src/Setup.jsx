@@ -142,7 +142,7 @@ function Setup() {
         <header className="hl-header">
           <h1 className="hl-header-name">Split-Flap Display</h1>
         </header>
-        <div className="setup-body"><p className="setup-loading">Loading…</p></div>
+        <div className="hl-page"><p className="hl-empty">Loading…</p></div>
       </div>
     );
   }
@@ -153,11 +153,11 @@ function Setup() {
 
   return (
     <div className={`setup ${themeClass}`}>
-      {/* Row one of the shared shell header: appliance name, status, nav,
-          running commit. Identical on every appliance
-          (jeffstrout/homelab-standards#5). It sits OUTSIDE .setup-card so it
-          spans the viewport like the other two appliances' bars, rather than
-          being a heading inside the content column. */}
+      {/* Row one of the shared shell header: appliance name, status, nav.
+          Identical on every appliance (jeffstrout/homelab-standards#5). It sits
+          OUTSIDE .hl-page so it spans the viewport like the other two
+          appliances' bars, rather than being a heading inside the content
+          column. The running commit is in the footer (#8). */}
       <header className="hl-header">
         <h1 className="hl-header-name">Split-Flap Display</h1>
         <span className={`hl-pill hl-pill--${isConnected ? 'ok' : 'crit'}`}>
@@ -170,23 +170,17 @@ function Setup() {
           <a className="hl-header-link" href="/api/screens" target="_blank" rel="noopener">Screens JSON</a>
           <a className="hl-header-link" href="/">View display →</a>
         </nav>
-        <span className="hl-header-meta">
-          {version
-            ? `${version.commit}${version.builtAt && version.builtAt !== 'unknown' ? ` \u00b7 ${version.builtAt.slice(0, 10)}` : ''}`
-            : ''}
-        </span>
       </header>
-      <div className="setup-body">
-      <div className="setup-card">
+      <div className="hl-page">
 
-        <section className="setup-section">
-          <h2>Mode</h2>
+        <section className="hl-section">
+          <h2 className="hl-section-title">Mode</h2>
           <div className="setup-modes">
             {DISPLAY_MODES.map((m) => (
               <button
                 key={m.id}
                 type="button"
-                className={`setup-mode ${selected === m.id ? 'active' : ''}`}
+                className={`setup-mode hl-card ${selected === m.id ? 'active' : ''}`}
                 aria-pressed={selected === m.id}
                 disabled={saving}
                 onClick={() => chooseDisplayMode(m.id)}
@@ -198,35 +192,35 @@ function Setup() {
           </div>
         </section>
 
-        <section className="setup-section setup-row">
+        <section className="hl-section setup-row">
           <div>
-            <h2>Theme</h2>
+            <h2 className="hl-section-title">Theme</h2>
             <div className="setup-toggle">
-              <button type="button" className={settings.theme === 'dark' ? 'active' : ''} onClick={() => setTheme('dark')}>Dark</button>
-              <button type="button" className={settings.theme === 'light' ? 'active' : ''} onClick={() => setTheme('light')}>Light</button>
+              <button type="button" className={`hl-btn ${settings.theme === 'dark' ? 'active' : ''}`} onClick={() => setTheme('dark')}>Dark</button>
+              <button type="button" className={`hl-btn ${settings.theme === 'light' ? 'active' : ''}`} onClick={() => setTheme('light')}>Light</button>
             </div>
           </div>
           <div>
-            <h2>Flip sound</h2>
+            <h2 className="hl-section-title">Flip sound</h2>
             <div className="setup-toggle">
-              <button type="button" className={settings.soundEnabled ? 'active' : ''} onClick={() => setSound(true)}>On</button>
-              <button type="button" className={!settings.soundEnabled ? 'active' : ''} onClick={() => setSound(false)}>Off</button>
+              <button type="button" className={`hl-btn ${settings.soundEnabled ? 'active' : ''}`} onClick={() => setSound(true)}>On</button>
+              <button type="button" className={`hl-btn ${!settings.soundEnabled ? 'active' : ''}`} onClick={() => setSound(false)}>Off</button>
             </div>
           </div>
         </section>
 
-        <section className="setup-section">
-          <div className="setup-screens-head">
-            <h2>Screens</h2>
+        <section className="hl-section">
+          <h2 className="hl-section-title">
+            Screens
             {anyPopulated && (
-              <button type="button" className="setup-clear-all" onClick={() => del('/api/screens')}>
+              <button type="button" className="hl-btn setup-clear-all" onClick={() => del('/api/screens')}>
                 Clear all
               </button>
             )}
-          </div>
-          <p className="setup-screens-hint">
+          </h2>
+          <p className="hl-note">
             Up to {screens?.length ?? 6} screens rotate in Info Split Flap mode (15s each); the
-            date/time line stays pinned. Push content with <code>POST /api/screens/&lt;slot&gt;</code>;
+            date/time line stays pinned. Push content with <code className="hl-code">POST /api/screens/&lt;slot&gt;</code>;
             data expires 15 minutes after its last push.
           </p>
           <div className="setup-screens">
@@ -237,14 +231,14 @@ function Setup() {
                   <div className="setup-screen-meta">
                     <span className="setup-screen-slot">Slot {s.slot}</span>
                     {s.lines ? (
-                      <span className="setup-screen-ttl">expires in {remaining}</span>
+                      <span className="setup-screen-ttl hl-num">expires in {remaining}</span>
                     ) : (
                       <span className="setup-screen-ttl muted">empty</span>
                     )}
                     {s.lines && (
                       <button
                         type="button"
-                        className="setup-screen-clear"
+                        className="hl-btn setup-screen-clear"
                         onClick={() => del(`/api/screens/${s.slot}`)}
                       >
                         Clear
@@ -258,9 +252,25 @@ function Setup() {
           </div>
         </section>
 
-        <p className="setup-note">Changes apply to all displays instantly and are saved across restarts.</p>
       </div>
-      </div>
+      {/* Provenance, where every appliance carries it (homelab-standards#8).
+          This is NOT a revert of #71, which moved the commit up into the
+          header so all three appliances carried it in the same place. The
+          reason is the same and the placement is now shared: the fleet
+          contract puts it in .hl-footer, because row one is the row you scan
+          and "which build is this" is a question you go looking for once.
+
+          The standing note about persistence rides on the left — ambient
+          information about the appliance is exactly what the footer is for. */}
+      <footer className="hl-footer">
+        <span>Changes apply to all displays instantly and are saved across restarts.</span>
+        <span className="hl-footer-spacer" />
+        <span className="hl-footer-meta">
+          {version
+            ? `${version.commit}${version.builtAt && version.builtAt !== 'unknown' ? ` · ${version.builtAt.slice(0, 10)}` : ''}`
+            : ''}
+        </span>
+      </footer>
     </div>
   );
 }

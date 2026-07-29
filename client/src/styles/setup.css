@@ -37,31 +37,25 @@
   color: var(--hl-fg);
 }
 
-.setup-body {
-  flex: 1;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 5vh 16px 6vh;
-}
+/* The page column, section headings, notes, empty states, buttons and the
+   footer all come from components.css now. .setup-body + .setup-card were two
+   nested layout boxes doing what .hl-page does alone, at a third width (640px)
+   with viewport-relative vertical padding that collapsed to nothing on a phone
+   in landscape. */
 
-.setup-loading { color: var(--hl-fg-muted); }
-
-.setup-card { width: 100%; max-width: 640px; }
-
-.setup-section { margin-top: var(--hl-space-6); }
-.setup-section h2 {
-  font-size: var(--hl-text-xs); text-transform: uppercase; letter-spacing: .12em;
-  color: var(--hl-fg-muted); margin: 0 0 var(--hl-space-3);
-  font-weight: var(--hl-weight-semibold);
-}
+/* The column grows so the footer lands at the bottom of a short page instead of
+   floating in the middle of the viewport. */
+.setup .hl-page { flex: 1; width: 100%; }
 
 .setup-modes { display: flex; flex-direction: column; gap: var(--hl-space-3); }
+/* A mode is a .hl-card you can pick. Only the pickable part is local. */
 .setup-mode {
   display: flex; flex-direction: column; gap: var(--hl-space-1); text-align: left;
-  padding: var(--hl-space-4); border-radius: var(--hl-radius); cursor: pointer;
-  background: var(--hl-surface); color: var(--hl-fg);
-  border: 1px solid var(--hl-border);
+  cursor: pointer; width: 100%;
+  color: var(--hl-fg);
+  /* It is a <button>, so it would otherwise take the UA control font rather
+     than the admin stack .hl-card assumes around it. */
+  font-family: inherit;
   transition: background .15s ease, border-color .15s ease;
 }
 .setup-mode:hover { background: var(--hl-sunken); }
@@ -74,52 +68,41 @@
 .setup-mode-label { font-size: var(--hl-text-md); font-weight: var(--hl-weight-semibold); }
 .setup-mode-hint { font-size: var(--hl-text-sm); color: var(--hl-fg-muted); }
 
-.setup-row { display: flex; gap: var(--hl-space-6); flex-wrap: wrap; }
+/* Column gap and row gap were both 32px, so a wrapped second group read as an
+   orphaned section rather than a sibling. */
+.setup-row { display: flex; gap: var(--hl-space-4) var(--hl-space-6); flex-wrap: wrap; }
+.setup-row > div { min-width: 0; }
 
-.setup-toggle {
-  display: inline-flex; border: 1px solid var(--hl-border);
-  border-radius: var(--hl-radius); overflow: hidden;
+/* A segmented pair of .hl-btn. The buttons keep the shared shape — and with it
+   the 44px coarse-pointer floor they never had at 10px/22px on a 13px line —
+   while this rule only joins them into one control. */
+.setup-toggle { display: inline-flex; }
+.setup-toggle .hl-btn { border-radius: 0; }
+.setup-toggle .hl-btn:first-child {
+  border-top-left-radius: var(--hl-radius);
+  border-bottom-left-radius: var(--hl-radius);
 }
-.setup-toggle button {
-  background: var(--hl-surface); color: var(--hl-fg-muted); border: 0;
-  cursor: pointer; padding: 10px 22px;
-  font: var(--hl-weight-semibold) var(--hl-text-sm)/1 var(--hl-font-sans);
+.setup-toggle .hl-btn:last-child {
+  border-top-right-radius: var(--hl-radius);
+  border-bottom-right-radius: var(--hl-radius);
 }
-.setup-toggle button:hover { background: var(--hl-sunken); }
-.setup-toggle button.active {
+.setup-toggle .hl-btn + .hl-btn { margin-left: -1px; }
+.setup-toggle .hl-btn.active {
   color: var(--hl-accent); background: var(--hl-accent-wash);
+  border-color: var(--hl-accent-line);
+  position: relative; z-index: 1;
 }
 
-/* Rotating screens preview (issue #48). */
-.setup-screens-head {
-  display: flex; align-items: baseline; justify-content: space-between;
-  gap: var(--hl-space-3);
-}
-.setup-clear-all,
-.setup-screen-clear {
-  background: var(--hl-surface); color: var(--hl-fg); border: 1px solid var(--hl-border);
-  border-radius: var(--hl-radius-sm); font-family: var(--hl-font-sans);
-  font-weight: var(--hl-weight-semibold); cursor: pointer;
-}
-.setup-clear-all { padding: 5px var(--hl-space-3); font-size: var(--hl-text-sm); }
-.setup-screen-clear {
-  margin-left: auto; padding: 3px var(--hl-space-2); font-size: 12px;
-}
-.setup-clear-all:hover,
-.setup-screen-clear:hover { background: var(--hl-sunken); }
+/* Rotating screens preview (issue #48). The two Clear buttons are .hl-btn now;
+   they were a third and fourth bespoke button treatment (5px/12px and 3px/8px)
+   alongside the toggles' 10px/22px. */
+.setup-screen-clear { margin-left: auto; }
 
-.setup-screens-hint {
-  font-size: var(--hl-text-sm); color: var(--hl-fg-muted);
-  margin: 0 0 var(--hl-space-4); line-height: 1.55;
-}
-.setup-screens-hint code {
-  font-family: var(--hl-font-mono); font-size: 12px;
-  background: var(--hl-sunken); padding: 1px 5px; border-radius: var(--hl-radius-sm);
-}
-
+/* 260px was the grid's minimum column, which on a 320px phone left the slot
+   preview's container-relative glyphs around 6px. One column below that. */
 .setup-screens {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
   gap: var(--hl-space-4);
 }
 .setup-screen { display: flex; flex-direction: column; gap: var(--hl-space-2); }
@@ -133,10 +116,7 @@
   font-weight: var(--hl-weight-semibold); letter-spacing: var(--hl-tracking-label);
 }
 /* Countdown ticks every second — tabular so its width never changes. */
-.setup-screen-ttl {
-  color: var(--hl-fg-muted); font-family: var(--hl-font-mono);
-  font-variant-numeric: tabular-nums; font-size: 12px;
-}
+.setup-screen-ttl { color: var(--hl-fg-muted); font-size: 12px; }
 /* Nearing expiry is a state worth noticing. */
 .setup-screen-ttl.expiring { color: var(--hl-warn); font-weight: var(--hl-weight-semibold); }
 .setup-screen-ttl.muted { color: var(--hl-fg-subtle); }
@@ -167,8 +147,6 @@
 .setup.theme-dark .screen-tile { background: #1a1a1a; color: #f0f0f0; }
 .setup.theme-light .screen-grid { background: #f5f5f5; }
 .setup.theme-light .screen-tile { background: #e8e8e8; color: #1a1a1a; }
-
-.setup-note { margin-top: var(--hl-space-6); font-size: var(--hl-text-sm); color: var(--hl-fg-muted); }
 
 /* Scoped to /setup only. A global reset would kill the board's flip animation,
    which is the product rather than decoration. */
