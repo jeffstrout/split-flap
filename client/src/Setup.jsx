@@ -102,22 +102,11 @@ function Setup() {
     return () => clearInterval(id);
   }, []);
 
-  // The kiosk shell locks scrolling + centers content globally for the wall
-  // display (`body { overflow: hidden; display: flex; ... }` in index.html). That
-  // clips this taller config page (issue #54), so relax the body while /setup is
-  // mounted and restore it on unmount. Setup only renders on /setup, so the live
-  // display (/) is never affected.
-  useEffect(() => {
-    const b = document.body.style;
-    const prev = {
-      overflow: b.overflow, display: b.display, height: b.height, alignItems: b.alignItems,
-    };
-    b.overflow = 'auto';
-    b.display = 'block';
-    b.height = 'auto';
-    b.alignItems = 'flex-start';
-    return () => { Object.assign(b, prev); };
-  }, []);
+  // The useEffect that used to relax document.body here is gone (#79). The
+  // kiosk styling it existed to undo is now scoped to the display route in
+  // index.html, so /setup never has it applied in the first place — which also
+  // fixes the one declaration this effect never touched, the background behind
+  // Safari's tab bar.
 
   const chooseDisplayMode = useCallback(async (id) => {
     setSaving(true);
