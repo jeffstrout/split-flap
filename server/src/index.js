@@ -63,6 +63,19 @@ export const state = {
   mode: DEFAULT_MODE // 'flip' = split-flap board, 'qlock' = QLOCKTWO word clock
 };
 
+// MQTT state + availability (issue #68). Off unless MQTT_HOST is set: no
+// broker configured means no client and no error.
+//
+// Constructed up here with the other singletons, not next to the publishing
+// helpers below, because booting into flip mode calls startInfoScreen() during
+// module evaluation — which reaches broadcast() -> publishMqtt() before the
+// rest of the module has finished evaluating. Declared any later, `mqtt` is
+// still in its temporal dead zone at that moment and the server crash-loops on
+// boot (qlock mode never calls it, so the crash only appears on a display
+// persisted in flip mode). The constructor is pure — connecting is start()'s
+// job, and publishState() no-ops until then — so it is safe this early.
+const mqtt = new MqttPublisher();
+
 // Restore persisted state (NFR-8) — overrides defaults when enabled.
 const persisted = loadPersisted();
 if (persisted) {
@@ -149,10 +162,6 @@ wss.on('connection', (ws) => {
     state.clients.delete(ws);
   });
 });
-
-// MQTT state + availability (issue #68). Off unless MQTT_HOST is set: no
-// broker configured means no client and no error.
-const mqtt = new MqttPublisher();
 
 function mqttSnapshot() {
   return {
