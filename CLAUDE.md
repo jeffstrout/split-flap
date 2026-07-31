@@ -169,6 +169,10 @@ doctl apps logs <app-id> api --type run
 | `HOST_PORT` | Compose | Host port mapped to the container's 3001 (default: `8080`; used by `docker-compose.yml`) |
 | `IMAGE_TAG` | Compose | GHCR image tag to run (default: `latest`). Pin to `sha-<short>` to freeze/rollback |
 | `WATCHTOWER_POLL_INTERVAL` | Compose | Seconds between Watchtower update checks (default: `1200` ≈ 20 min) |
+| `MQTT_HOST` | Server | Broker host. **Unset = MQTT entirely off** (no client, no error) |
+| `MQTT_PORT` / `MQTT_USER` / `MQTT_PASS` | Server | Broker port (default `1883`) and optional credentials |
+| `MQTT_BASE_TOPIC` | Server | Topic root and HA device identifier (default `split_flap`). Changing it orphans existing HA entities |
+| `MQTT_DISCOVERY_PREFIX` | Server | HA discovery prefix (default `homeassistant`) |
 | `APP_COMMIT` / `APP_BUILD_TIME` | Server (set by image) | Build provenance baked in by CI; surfaced via `GET /api/version` and `/api/health`. `APP_VERSION` optionally carries a release tag |
 | `FLIP_SPEED` | Compose (build arg, local build only) | Flip-animation speed baked into the client: `1` = original, `3` = default/3x. Passed as `VITE_FLIP_SPEED` to the Vite build via `docker-compose.build.yml`; the published GHCR image is fixed at `3` |
 
@@ -395,6 +399,7 @@ chrome.exe --kiosk http://localhost:3000
 - `server/src/routes/messages.js` - API endpoints (message, screens, clock, sound, theme, mode, language, settings, health) + flip-mode info screen & screen rotation
 - `server/src/config.js` - Single source of truth for board dimensions
 - `server/src/persistence.js` - State persistence (on by default)
+- `server/src/mqtt.js` - MQTT state + HA discovery + Last Will (off unless `MQTT_HOST` is set)
 
 ### Config & DevOps
 
