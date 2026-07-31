@@ -8,6 +8,7 @@ import messagesRouter, { startInfoScreen, screensPayload } from './routes/messag
 import docsRouter from './routes/docs.js';
 import { ROWS, COLS } from './config.js';
 import { loadPersisted, startPersistence } from './persistence.js';
+import { MqttPublisher, isEnabled as mqttEnabled, settings as mqttSettings } from './mqtt.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -149,6 +150,26 @@ wss.on('connection', (ws) => {
   });
 });
 
+// MQTT state + availability (issue #68). Off unless MQTT_HOST is set: no
+// broker configured means no client and no error.
+const mqtt = new MqttPublisher();
+
+function mqttSnapshot() {
+  return {
+    mode: state.mode,
+    theme: state.theme,
+    clients: state.clients.size,
+    screens: state.screens,
+  };
+}
+
+// Publishing rides the existing broadcast path rather than being sprinkled
+// through the routes: every settings and screen change already funnels through
+// here to reach the displays, so there is exactly one place to keep in step.
+export function publishMqtt() {
+  mqtt.publishState(mqttSnapshot());
+}
+
 // Broadcast to all connected clients
 export function broadcast(data) {
   const message = JSON.stringify(data);
@@ -157,10 +178,34 @@ export function broadcast(data) {
       client.send(message);
     }
   });
+  // Client counts change on connect/disconnect too, which is not a broadcast —
+  // the heartbeat below covers that rather than hooking the socket lifecycle.
+  publishMqtt();
 }
 
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`WebSocket available on ws://localhost:${PORT}`);
   console.log(`Default mode: ${state.mode}`);
+
+  if (mqttEnabled()) {
+    mqtt.start().then(() => {
+      console.log(`MQTT -> ${mqttSettings.host}:${mqttSettings.port} (base ${mqttSettings.baseTopic})`);
+    }).catch(() => {
+      // A broker that is down must not stop the display from serving.
+      console.error('MQTT: initial connect failed; will retry in the background');
+    });
+    // Heartbeat: catches what the broadcast path cannot see — client
+    // connect/disconnect, and screen slots that expire on a timer rather than
+    // through an API call.
+    const beat = setInterval(publishMqtt, 30000);
+    if (beat.unref) beat.unref();
+
+    // Publish a clean `offline` on the way out. A graceful disconnect means the
+    // broker will NOT fire the will, so without this a planned restart looks
+    // identical to the appliance still being up.
+    const shutdown = () => { mqtt.stop().finally(() => process.exit(0)); };
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
+  }
 });
