@@ -35,6 +35,14 @@ bash install-pi4b.sh
 The script is idempotent — safe to re-run. Prefer the manual steps below for a
 3B+/5, for building locally, or to understand what each step does.
 
+> **Trade-off:** the script writes its own `docker-compose.yml` instead of
+> cloning, so a Pi built this way has no `.git` and can never `git pull`. It will
+> keep running (Watchtower still updates the *image*), but it will never receive
+> a **compose** change — a new port, a new env var, a new service — without hand
+> editing. If you expect to track this repo, use the manual clone in step 3, or
+> convert afterwards with
+> [Repairing a non-git install](#repairing-a-non-git-install).
+
 > The gist is a standalone copy of `install-pi4b.sh` in this repo; if the script
 > here changes, update the gist too (`gh gist edit be50eefa386d272ec5225a5d70268e1f install-pi4b.sh`).
 
@@ -98,24 +106,39 @@ free -h                                         # confirm ~1 GB swap is active
 
 ## 3. Get the code onto the Pi
 
-The repo is **private**, so pick one:
-
-**Option A — clone with a GitHub token** (a fine-grained PAT with read access):
+The repo is **public** — a plain clone, no token, no GitHub auth on the Pi:
 
 ```bash
 git clone https://github.com/jeffstrout/split-flap.git
-# username: jeffstrout   password: <paste your PAT>
 cd split-flap
 ```
 
-**Option B — copy from your Mac** (no GitHub auth on the Pi). Run on the Mac:
+**Clone it; don't copy it.** The Pi pulls its *image* from GHCR, so the checkout
+exists only to supply `docker-compose.yml` — but that is exactly what future
+changes arrive in. A Pi set up by `rsync` or by the quick-install script has no
+`.git`, so `git pull` fails and it silently never receives a compose change
+again. That is how one display kept publishing the old port after the fleet
+moved to 80. To convert such a Pi, see
+[Repairing a non-git install](#repairing-a-non-git-install).
+
+### Repairing a non-git install
+
+If `git pull` says `not a git repository`, this Pi was built by the quick-install
+script (or an old `rsync`). Convert it in place — the named volume is keyed to
+the directory name, so keeping the path as `~/split-flap` preserves the display's
+persisted mode/theme/message:
 
 ```bash
-rsync -av --exclude node_modules --exclude dist --exclude .git \
-  "/path/to/Flip Board/" pi@splitflap.local:~/split-flap/
+cd ~/split-flap && docker compose down && cp .env /tmp/split-flap.env.bak && cd ~ \
+  && git clone https://github.com/jeffstrout/split-flap.git ~/split-flap-git \
+  && mv ~/split-flap ~/split-flap-generated.bak && mv ~/split-flap-git ~/split-flap \
+  && cp /tmp/split-flap.env.bak ~/split-flap/.env \
+  && cd ~/split-flap && docker compose pull && docker compose up -d
 ```
 
-Then on the Pi: `cd ~/split-flap`.
+Check `docker volume ls | grep split-flap` before and after: the name must be
+unchanged (`split-flap_split-flap-data`). A second volume means the project name
+changed and the display will come back with default settings.
 
 ---
 
@@ -136,7 +159,8 @@ curl http://localhost/api/version          # which build is running
 ```
 
 From any device on the network, open **`http://splitflap.local`** (or
-`http://<pi-ip>`) and configure mode/theme/sound at **`/setup`** (the
+`http://<pi-ip>`) — the `.local` name is the Pi's own hostname, so it only works
+if you named the host `splitflap`; check with `hostnamectl` and configure mode/theme/sound at **`/setup`** (the
 running build shows at the bottom). Your choice persists across reboots and
 updates.
 
@@ -201,6 +225,8 @@ cat >> ~/.bash_profile <<'EOF'
 if [ "$(tty)" = "/dev/tty1" ]; then
   # Wait for the container's web server so a cold boot doesn't land on an error page
   until curl -sf http://localhost/api/health >/dev/null 2>&1; do sleep 2; done
+  # Clear a stale Chromium profile lock (see "If the screen is black" below)
+  rm -f "$HOME/.config/chromium/Singleton"* 2>/dev/null
   # Pi 3B+: add --disable-gpu --disable-gpu-compositing before --test-type
   exec cage -- chromium --kiosk --ozone-platform=wayland \
     --noerrdialogs --disable-infobars --incognito --test-type \
@@ -232,6 +258,43 @@ systemctl is-enabled docker        # should print "enabled"
 ```
 
 The surest test is to actually power-cycle it and watch it come back to the board.
+
+### If the screen is black but SSH works
+
+Almost always a stale **Chromium profile lock**. Chromium writes the machine's
+hostname into `~/.config/chromium/Singleton*` and refuses to start if the lock
+names a different host — so **renaming the Pi** guarantees this, and an unclean
+power cut can cause it too:
+
+```
+The profile appears to be in use by another Chromium process (1630)
+on another computer (OfficeDisplay).
+```
+
+It fails hard rather than degrading, because the launcher uses `exec`: Chromium
+dying takes the login shell with it, so getty respawns, fails again, and gives up
+at its restart limit. `systemctl status getty@tty1` shows
+`failed (Result: start-limit-hit)` and nothing renders.
+
+Diagnose with the tail of `~/cage.log`, then:
+
+```bash
+rm -f ~/.config/chromium/Singleton* && sudo systemctl reset-failed getty@tty1.service && sudo systemctl restart getty@tty1.service
+```
+
+The `rm` line in the autostart block above prevents a recurrence; a Pi set up
+before that line existed needs it added by hand. Ignore any
+`EGL_BAD_PARAMETER` lines in `cage.log` — those are normal on a Pi and appear
+even on a healthy boot.
+
+> **Renaming the Pi** (`hostnamectl set-hostname`) also needs `/etc/hosts`
+> updated in the same pass, or every `sudo` prints `unable to resolve host`:
+>
+> ```bash
+> sudo hostnamectl set-hostname NEWNAME && sudo sed -i "s/^127\.0\.1\.1.*/127.0.1.1\tNEWNAME/" /etc/hosts
+> ```
+>
+> Clear the Chromium lock afterwards, then reboot.
 
 ---
 
