@@ -19,7 +19,7 @@ set -euo pipefail
 
 ########################  EDIT THESE IF YOU LIKE  ############################
 TZ_NAME="America/Chicago"      # IANA timezone for the clock
-HOST_PORT="8080"               # port you open in a browser
+HOST_PORT="80"                 # port you open in a browser (80 = no port in the URL)
 DEFAULT_MODE="qlock"           # boot mode: qlock (word clock) | flip
 DEFAULT_QLOCK_LANG="en"        # word-clock language: en | ar
 #############################################################################
@@ -65,7 +65,7 @@ services:
     labels:
       com.centurylinklabs.watchtower.enable: "true"
     ports:
-      - "${HOST_PORT:-8080}:3001"
+      - "${HOST_PORT:-80}:3001"
     environment:
       TZ: ${TZ:-UTC}
       DEFAULT_MODE: ${DEFAULT_MODE:-qlock}

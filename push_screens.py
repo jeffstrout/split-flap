@@ -4,7 +4,7 @@ import json
 import subprocess
 import urllib.request
 
-HOST = "http://192.168.0.17:8080"
+HOST = "http://192.168.0.17"
 COLS = 24
 SEP = "-" * COLS
 

@@ -18,7 +18,7 @@ built React client together — so there's nothing else to run.
 
 ```
                     ┌─────────────────────────────────────────┐
-                    │  Docker container (port 3001 → host 8080) │
+                    │  Docker container (port 3001 → host 80)   │
    browser ───────▶ │                                           │
    (kiosk / phone)  │   Express ──┬── GET /            static   │
         │           │             │   React client (Vite build) │
@@ -50,7 +50,7 @@ cp .env.example .env                 # optional — defaults work as-is
 docker compose pull && docker compose up -d
 ```
 
-Then open **`http://<pi-ip>:8080`** from any browser on your network. The Pi
+Then open **`http://<pi-ip>`** from any browser on your network. The Pi
 itself can be the display: plug it into a monitor over HDMI and launch Chromium
 in kiosk mode (see [KIOSK.md](KIOSK.md)).
 
@@ -92,7 +92,7 @@ defaults below apply.
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `HOST_PORT` | `8080` | Host port the display + API are served on |
+| `HOST_PORT` | `80` | Host port the display + API are served on. Port 80 means the URL needs no port; override if the host already has something there |
 | `TZ` | `UTC` | Timezone for the clock, IANA name (e.g. `America/Chicago`). Set this or the clock shows UTC |
 | `DEFAULT_MODE` | `qlock` | Boot mode: `qlock` (word clock) or `flip` (split-flap) |
 | `PERSIST_FILE` | `/data/.state.json` | State file on the volume; `off` to disable |
@@ -100,8 +100,35 @@ defaults below apply.
 | `WATCHTOWER_POLL_INTERVAL` | `1200` | Seconds between auto-update checks (~20 min) |
 | `FLIP_SPEED` | `3` | Flip-animation speed. Baked in at **build** time, so it only applies to local builds ([docker-compose.build.yml](docker-compose.build.yml)); the published image is fixed at `3` |
 
-Changing the mode/theme/sound from the **setup screen** (`http://<pi-ip>:8080/setup`)
+Changing the mode/theme/sound from the **setup screen** (`http://<pi-ip>/setup`)
 applies to all displays instantly and persists across restarts.
+
+### Port 80 needs no extra privilege
+
+Publishing port 80 does **not** require running the container as root or adding
+`CAP_NET_BIND_SERVICE`. The host side of a Docker port publish is bound by
+`dockerd`, which already runs as root; Express still listens on unprivileged
+3001 inside the container. Only the host mapping changed.
+
+### Moving an existing install from 8080
+
+The display used to serve on `8080`. Watchtower will **not** make this change for
+you — it recreates the container from the config the running container already
+has, and never re-reads `docker-compose.yml`. So an existing Pi keeps serving
+`8080` until you pull and re-up:
+
+```bash
+cd ~/split-flap && git pull
+docker compose up -d          # re-reads the compose file; republishes on 80
+curl http://localhost/api/health
+```
+
+If this Pi is also the kiosk, update the autostart URL in `~/.bash_profile` from
+`http://localhost:8080` to `http://localhost` in the same pass (see
+[PI-SETUP.md](PI-SETUP.md#5-make-the-pi-the-display-chromium-kiosk-on-hdmi)),
+then reboot — otherwise the wall display lands on an error page at the next
+reload. To cut over without any gap, publish both ports for the transition by
+adding a second mapping (`- "8080:3001"`) before dropping it later.
 
 ---
 
@@ -153,7 +180,7 @@ Run the **64-bit** Raspberry Pi OS so the standard `arm64` Node image is used.
 ```bash
 docker compose logs -f                       # follow logs (app + watchtower)
 docker compose pull && docker compose up -d  # update now (don't wait for the poll)
-curl http://<pi-ip>:8080/api/version         # which build is running
+curl http://<pi-ip>/api/version              # which build is running
 docker compose down                          # stop (keeps the data volume)
 docker compose down -v                       # stop AND wipe persisted state
 ```
@@ -166,15 +193,15 @@ The persisted state lives in the `split-flap-data` volume and survives
 ## API
 
 Full endpoint reference is in [CLAUDE.md](CLAUDE.md#api-endpoints). Common ones
-(replace host/port to match your `HOST_PORT`):
+(replace the host; add `:<port>` only if you overrode `HOST_PORT`):
 
 ```bash
-curl -X POST http://<pi-ip>:8080/api/mode/qlock        # word clock
-curl -X POST http://<pi-ip>:8080/api/mode/flip         # split-flap board
-curl -X POST http://<pi-ip>:8080/api/message \
+curl -X POST http://<pi-ip>/api/mode/qlock        # word clock
+curl -X POST http://<pi-ip>/api/mode/flip         # split-flap board
+curl -X POST http://<pi-ip>/api/message \
   -H 'Content-Type: application/json' \
   -d '{"lines":["HELLO WORLD"],"align":"center"}'
-curl http://<pi-ip>:8080/api/health                    # liveness probe
+curl http://<pi-ip>/api/health                    # liveness probe
 ```
 
 ### Rotating info screens
@@ -187,12 +214,12 @@ screen (`/setup`) shows a live, view-only preview of all 6 slots.
 
 ```bash
 # Push to slot 3 (up to 7 lines; uppercased, padded to 24 chars)
-curl -X POST http://<pi-ip>:8080/api/screens/3 \
+curl -X POST http://<pi-ip>/api/screens/3 \
   -H 'Content-Type: application/json' \
   -d '{"lines":["SERVER A","CPU 42%","MEM 71%"],"align":"center"}'
 
-curl http://<pi-ip>:8080/api/screens                   # inspect all slots + TTLs
-curl -X DELETE http://<pi-ip>:8080/api/screens/3       # clear one slot
+curl http://<pi-ip>/api/screens                   # inspect all slots + TTLs
+curl -X DELETE http://<pi-ip>/api/screens/3       # clear one slot
 ```
 
 ---

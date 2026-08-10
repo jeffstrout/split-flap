@@ -11,7 +11,7 @@ import urllib.request
 from datetime import datetime
 
 # --- Config (edit these) ----------------------------------------------------
-HOST = "http://192.168.0.17:8080"   # your Pi display
+HOST = "http://192.168.0.17"        # your Pi display
 SLOT = 1                            # which screen slot (1-6)
 LOCATION = ""                       # e.g. "Seguin" or "78155"; "" = auto by IP
 REFRESH_SECONDS = 300               # 5 min: refreshes weather + beats the 15-min expiry

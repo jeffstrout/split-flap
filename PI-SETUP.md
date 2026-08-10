@@ -131,12 +131,12 @@ image is published (every ~20 min). Check it:
 
 ```bash
 docker compose logs -f        # Ctrl-C to stop following
-curl http://localhost:8080/api/health
-curl http://localhost:8080/api/version          # which build is running
+curl http://localhost/api/health
+curl http://localhost/api/version          # which build is running
 ```
 
-From any device on the network, open **`http://splitflap.local:8080`** (or
-`http://<pi-ip>:8080`) and configure mode/theme/sound at **`/setup`** (the
+From any device on the network, open **`http://splitflap.local`** (or
+`http://<pi-ip>`) and configure mode/theme/sound at **`/setup`** (the
 running build shows at the bottom). Your choice persists across reboots and
 updates.
 
@@ -200,11 +200,11 @@ cat >> ~/.bash_profile <<'EOF'
 # Split-Flap kiosk: on the HDMI console (tty1) only, run the board fullscreen
 if [ "$(tty)" = "/dev/tty1" ]; then
   # Wait for the container's web server so a cold boot doesn't land on an error page
-  until curl -sf http://localhost:8080/api/health >/dev/null 2>&1; do sleep 2; done
+  until curl -sf http://localhost/api/health >/dev/null 2>&1; do sleep 2; done
   # Pi 3B+: add --disable-gpu --disable-gpu-compositing before --test-type
   exec cage -- chromium --kiosk --ozone-platform=wayland \
     --noerrdialogs --disable-infobars --incognito --test-type \
-    http://localhost:8080 >/home/pi/cage.log 2>&1
+    http://localhost >/home/pi/cage.log 2>&1
 fi
 EOF
 
@@ -262,7 +262,7 @@ volume and survive reboots and updates — only `down -v` clears them.
 > # or: sudo reboot
 > ```
 >
-> Tip: `curl -s http://localhost:8080/api/version` reports the *served* build; if
+> Tip: `curl -s http://localhost/api/version` reports the *served* build; if
 > the display looks unchanged after it advances, the kiosk just needs a reload.
 
 ---

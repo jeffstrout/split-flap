@@ -17,7 +17,7 @@ services:
     labels:
       com.centurylinklabs.watchtower.enable: "true"
     ports:
-      - "${HOST_PORT:-8080}:3001"   # display + API -> http://<pi-ip>:8080
+      - "${HOST_PORT:-80}:3001"     # display + API -> http://<pi-ip>
     environment:
       # All optional — these fall back to the app's built-in defaults.
       # Override by creating a .env file (see .env.example).
