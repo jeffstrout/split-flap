@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import FlipBoard from './components/FlipBoard';
 import QlockTwo from './components/QlockTwo';
 import Controls from './components/Controls';
@@ -23,24 +23,27 @@ function Display() {
     ? 'ws://localhost:3001'
     : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api`;
 
-  const { lastMessage } = useWebSocket(wsUrl);
+  // Every frame is handled as it arrives (issue #88). This ran as an effect on a
+  // `lastMessage` state slot, which dropped the connect-time `settings` frame —
+  // the one carrying the boot mode — whenever React batched it away.
+  const handleFrame = useCallback((frame) => {
+    if (frame?.type === 'message' && frame.data?.lines) {
+      setLines(frame.data.lines);
+    }
+    if (frame?.type === 'settings') {
+      if (frame.data.soundEnabled !== undefined) {
+        setSoundEnabled(frame.data.soundEnabled);
+      }
+      if (frame.data.theme) {
+        setTheme(frame.data.theme);
+      }
+      if (frame.data.mode) {
+        setMode(frame.data.mode);
+      }
+    }
+  }, []);
 
-  useEffect(() => {
-    if (lastMessage?.type === 'message' && lastMessage.data?.lines) {
-      setLines(lastMessage.data.lines);
-    }
-    if (lastMessage?.type === 'settings') {
-      if (lastMessage.data.soundEnabled !== undefined) {
-        setSoundEnabled(lastMessage.data.soundEnabled);
-      }
-      if (lastMessage.data.theme) {
-        setTheme(lastMessage.data.theme);
-      }
-      if (lastMessage.data.mode) {
-        setMode(lastMessage.data.mode);
-      }
-    }
-  }, [lastMessage]);
+  useWebSocket(wsUrl, handleFrame);
 
   // Keep Safari's tab/toolbar chrome on the board's own theme. index.html sets
   // this before first paint from the route alone; the theme is user-settable
