@@ -61,7 +61,20 @@ function Setup() {
   const wsUrl = import.meta.env.DEV
     ? 'ws://localhost:3001'
     : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/api`;
-  const { lastMessage, isConnected } = useWebSocket(wsUrl);
+  // Reflect changes made from anywhere (other devices, the display, publishers)
+  // live: settings and the rotating-screen slots both arrive over WebSocket,
+  // and both are handled as they arrive (issue #88) — a `settings` and a
+  // `screens` frame in the same batch used to collapse into one.
+  const handleFrame = useCallback((frame) => {
+    if (frame?.type === 'settings') {
+      setSettings((prev) => ({ ...prev, ...frame.data }));
+    }
+    if (frame?.type === 'screens' && frame.data?.slots) {
+      setScreens(frame.data.slots);
+    }
+  }, []);
+
+  const { isConnected } = useWebSocket(wsUrl, handleFrame);
 
   // Hydrate from current server state on load.
   useEffect(() => {
@@ -79,17 +92,6 @@ function Setup() {
       .then(setVersion)
       .catch(() => setVersion(null));
   }, []);
-
-  // Reflect changes made from anywhere (other devices, the display, publishers)
-  // live: settings and the rotating-screen slots both arrive over WebSocket.
-  useEffect(() => {
-    if (lastMessage?.type === 'settings') {
-      setSettings((prev) => ({ ...prev, ...lastMessage.data }));
-    }
-    if (lastMessage?.type === 'screens' && lastMessage.data?.slots) {
-      setScreens(lastMessage.data.slots);
-    }
-  }, [lastMessage]);
 
   // Tick once a second so the per-slot TTL countdowns advance between pushes.
   useEffect(() => {

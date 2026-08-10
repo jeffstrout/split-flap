@@ -5,12 +5,25 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 const BASE_RECONNECT_MS = 1000;
 const MAX_RECONNECT_MS = 30000;
 
-function useWebSocket(url) {
-  const [lastMessage, setLastMessage] = useState(null);
+// Frames are delivered to `onMessage` as they arrive rather than parked in a
+// `lastMessage` state slot (issue #88). A single slot silently loses frames:
+// the server sends `message`, `settings` and `screens` back-to-back on connect,
+// the browser dispatches them in one task, and React 18 batches the three
+// setState calls into one commit — so only the final frame is ever observed.
+// The middle one, `settings`, is the mode the display boots into, which is why
+// a board set to flip came up as the word clock.
+function useWebSocket(url, onMessage) {
   const [isConnected, setIsConnected] = useState(false);
   const wsRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const attemptRef = useRef(0);
+
+  // Held in a ref so an inline callback (a new identity every render) does not
+  // land in connect()'s dependencies and tear the socket down on each render.
+  const handlerRef = useRef(onMessage);
+  useEffect(() => {
+    handlerRef.current = onMessage;
+  });
 
   const scheduleReconnect = useCallback((connectFn) => {
     const attempt = attemptRef.current;
@@ -38,7 +51,7 @@ function useWebSocket(url) {
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          setLastMessage(data);
+          handlerRef.current?.(data);
         } catch (e) {
           console.error('Failed to parse WebSocket message:', e);
         }
@@ -75,7 +88,7 @@ function useWebSocket(url) {
     };
   }, [connect]);
 
-  return { lastMessage, isConnected };
+  return { isConnected };
 }
 
 export default useWebSocket;

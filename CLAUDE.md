@@ -390,7 +390,11 @@ chrome.exe --kiosk http://localhost:3000
 - `client/src/components/FlipRow.jsx` - Row of characters, maps text to FlipChar
 - `client/src/components/FlipChar.jsx` - Individual character flip animation
 - `client/src/components/flipTiming.js` - Flip animation timing (single source; speed via `VITE_FLIP_SPEED`, default 3x). Tiles flip the shortest direction through the character wheel (`FlipChar.jsx`)
-- `client/src/hooks/useWebSocket.js` - Auto-reconnecting WebSocket hook
+- `client/src/hooks/useWebSocket.js` - Auto-reconnecting WebSocket hook. Takes
+  `(url, onMessage)` and hands **every** frame to `onMessage` as it arrives.
+  It deliberately does not expose a `lastMessage` state slot: the connect-time
+  `message`/`settings`/`screens` frames are dispatched in one task, so React
+  batching collapsed them and the display booted into the wrong mode (#88)
 - `client/src/styles/flip.css` - Styling, dimensions, animations, theme support
 
 ### Server
