@@ -124,6 +124,11 @@ CHROMIUM="$(command -v chromium || command -v chromium-browser || true)"
 log "Enabling console auto-login on the HDMI tty"
 sudo raspi-config nonint do_boot_behaviour B2
 
+# http://localhost:80 works but reads badly in logs and docs; keep it portless
+# unless the port was overridden.
+KIOSK_URL="http://localhost"
+[ "$HOST_PORT" != "80" ] && KIOSK_URL="http://localhost:$HOST_PORT"
+
 log "Installing the kiosk launcher in ~/.bash_profile"
 MARKER="# >>> split-flap kiosk >>>"
 if grep -qF "$MARKER" "$HOME/.bash_profile" 2>/dev/null; then
@@ -134,10 +139,17 @@ $MARKER
 # On the HDMI console (tty1) only: wait for the server, then open the board.
 # Pi 4B keeps GPU acceleration ON (no --disable-gpu; that's a 3B+ workaround).
 if [ "\$(tty)" = "/dev/tty1" ]; then
-  until curl -sf http://localhost:$HOST_PORT/api/health >/dev/null 2>&1; do sleep 2; done
+  until curl -sf $KIOSK_URL/api/health >/dev/null 2>&1; do sleep 2; done
+  # Chromium stamps the hostname into its profile lock and refuses to start if
+  # the lock names a different machine. Renaming the Pi, or a power cut mid-run,
+  # leaves one behind — and because this line is \`exec\`, a Chromium that dies
+  # takes the login shell with it, so getty respawns until it hits its restart
+  # limit and the wall goes black. Clearing the lock first makes that
+  # unrecoverable state merely a slow boot.
+  rm -f "\$HOME/.config/chromium/Singleton"* 2>/dev/null
   exec cage -- $CHROMIUM --kiosk --ozone-platform=wayland \\
     --noerrdialogs --disable-infobars --incognito --test-type \\
-    http://localhost:$HOST_PORT >"\$HOME/cage.log" 2>&1
+    $KIOSK_URL >"\$HOME/cage.log" 2>&1
 fi
 # <<< split-flap kiosk <<<
 EOF
