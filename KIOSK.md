@@ -2,18 +2,18 @@
 
 How to run the display full-screen on a wall-mounted monitor (FR-35–FR-37).
 
-> **Port:** the single Docker container serves on **8080** by default
-> (`http://<host>:8080`). Local non-Docker dev serves on **3000**. Adjust the
-> URLs below to match how you're running it.
+> **Port:** the single Docker container serves on **80** by default, so
+> `http://<host>` needs no port. Local non-Docker dev serves on **3000**.
+> Adjust the URLs below to match how you're running it.
 
 ## Launch full-screen
 
 ```bash
 # macOS
-open -a "Google Chrome" --args --kiosk --app=http://<host>:8080
+open -a "Google Chrome" --args --kiosk --app=http://<host>
 
 # Linux (Chromium)
-chromium-browser --kiosk --app=http://<host>:8080 \
+chromium-browser --kiosk --app=http://<host> \
   --noerrdialogs --disable-infobars --incognito
 ```
 
@@ -38,7 +38,7 @@ sudo apt install -y cage chromium
 # under Wayland fine, giving smoother flip animation):
 cage -- chromium --kiosk --ozone-platform=wayland \
   --noerrdialogs --disable-infobars --incognito --test-type \
-  http://localhost:8080
+  http://localhost
 
 # Pi 3B+ — add --disable-gpu: its older VideoCore IV can't give Chromium a
 # working GL ES context under Wayland (hardware GL black-screens), so render in
@@ -46,7 +46,7 @@ cage -- chromium --kiosk --ozone-platform=wayland \
 cage -- chromium --kiosk --ozone-platform=wayland \
   --noerrdialogs --disable-infobars --incognito \
   --disable-gpu --disable-gpu-compositing --test-type \
-  http://localhost:8080
+  http://localhost
 ```
 
 > The boot-time autostart launcher in [PI-SETUP.md](PI-SETUP.md#5-make-the-pi-the-display-chromium-kiosk-on-hdmi)
@@ -97,8 +97,8 @@ Add the kiosk launch command to the OS autostart (macOS Login Items /
 Mode is API-controlled (all displays switch together):
 
 ```bash
-curl -X POST http://<host>:8080/api/mode/qlock   # word clock
-curl -X POST http://<host>:8080/api/mode/flip    # split-flap board
+curl -X POST http://<host>/api/mode/qlock   # word clock
+curl -X POST http://<host>/api/mode/flip    # split-flap board
 ```
 
 ## Burn-in mitigation (OLED/plasma only)

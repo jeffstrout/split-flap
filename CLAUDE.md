@@ -94,7 +94,7 @@ self-hosted, recommended for a wall display) and **DigitalOcean App Platform**
 One container runs everything. The multi-stage `Dockerfile` builds the React
 client (stage 1), then produces a slim runtime image where **Express serves the
 static client, the REST API, and the WebSocket all on one port** (3001 inside
-the container, mapped to host `8080` by default). Recommended for an
+the container, mapped to host `80` by default). Recommended for an
 HDMI-attached Pi display. Full guide: `README.md`.
 
 The Pi **pulls a prebuilt multi-arch image from GHCR** and never builds from
@@ -104,7 +104,7 @@ auto-updates (issue #50).
 ```bash
 cp .env.example .env                  # optional — defaults work as-is
 docker compose pull && docker compose up -d   # pull image + run + Watchtower
-# open http://<host>:8080  (and /setup to configure)
+# open http://<host>  (and /setup to configure)
 ```
 
 - **Single port**: the WebSocket shares the HTTP server (`new WebSocketServer({ server })`)
@@ -166,7 +166,7 @@ doctl apps logs <app-id> api --type run
 | `DEFAULT_MODE` | Server | Boot mode `flip`\|`qlock` (default: `qlock`) |
 | `PERSIST_FILE` | Server | State file path. On by default (`server/.state.json`); set to `off` to disable |
 | `CLIENT_DIST` | Server | Path to the built client to serve on the same port. Unset = static serving off (dev). Set to `/app/client/dist` in the Docker image |
-| `HOST_PORT` | Compose | Host port mapped to the container's 3001 (default: `8080`; used by `docker-compose.yml`) |
+| `HOST_PORT` | Compose | Host port mapped to the container's 3001 (default: `80`, so the URL needs no port; used by `docker-compose.yml`) |
 | `IMAGE_TAG` | Compose | GHCR image tag to run (default: `latest`). Pin to `sha-<short>` to freeze/rollback |
 | `WATCHTOWER_POLL_INTERVAL` | Compose | Seconds between Watchtower update checks (default: `1200` ≈ 20 min) |
 | `MQTT_HOST` | Server | Broker host. **Unset = MQTT entirely off** (no client, no error) |
@@ -215,7 +215,7 @@ date/time line); each is uppercased and padded/truncated to 24 chars with the
 same rules as `/api/message`. Example push from another machine:
 
 ```bash
-curl -X POST http://<host>:8080/api/screens/3 \
+curl -X POST http://<host>/api/screens/3 \
   -H 'Content-Type: application/json' \
   -d '{"lines":["SERVER A","CPU 42%","MEM 71%"],"align":"center"}'
 ```
