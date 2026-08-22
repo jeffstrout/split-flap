@@ -16,7 +16,7 @@ WORKDIR /build
 # Flip-animation speed multiplier baked into the client bundle at build time
 # (1 = original, 3 = default/3x; lower is gentler on a Pi 3B+). Set via the
 # Docker `.env` FLIP_SPEED -> compose build arg.
-ARG VITE_FLIP_SPEED=3
+ARG VITE_FLIP_SPEED=5
 ENV VITE_FLIP_SPEED=$VITE_FLIP_SPEED
 
 # Install client deps first (cached unless the lockfile changes).

@@ -2,7 +2,7 @@
 #
 # The base docker-compose.yml PULLS the prebuilt GHCR image. Layer this file on
 # top to build the image from source instead — e.g. to test a change before it's
-# published, or to bake a custom FLIP_SPEED (which CI fixes at the default 2).
+# published, or to bake a custom FLIP_SPEED (which CI fixes at the default 5).
 #
 # Build + run just the app (skip Watchtower) on a capable machine (Mac / CI):
 #
@@ -16,7 +16,7 @@ services:
       context: .
       args:
         # Flip-animation speed baked into the client at build time.
-        # 1 = original (gentlest on a Pi 3B+), 3 = default/3x.
-        VITE_FLIP_SPEED: ${FLIP_SPEED:-3}
+        # 1 = original (gentlest on a Pi 3B+), 5 = default/5x.
+        VITE_FLIP_SPEED: ${FLIP_SPEED:-5}
     # Prefer the freshly built image over pulling from GHCR.
     pull_policy: build
