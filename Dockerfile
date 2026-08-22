@@ -19,6 +19,11 @@ WORKDIR /build
 ARG VITE_FLIP_SPEED=5
 ENV VITE_FLIP_SPEED=$VITE_FLIP_SPEED
 
+# Flip animation on/off (VITE_FLIP_ANIMATE). false → cells snap instantly with no
+# flip/stagger/sound. Set via the Docker `.env` FLIP_ANIMATE -> compose build arg.
+ARG VITE_FLIP_ANIMATE=true
+ENV VITE_FLIP_ANIMATE=$VITE_FLIP_ANIMATE
+
 # Install client deps first (cached unless the lockfile changes).
 COPY client/package.json client/package-lock.json ./client/
 RUN cd client && npm ci

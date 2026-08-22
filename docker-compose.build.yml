@@ -18,5 +18,7 @@ services:
         # Flip-animation speed baked into the client at build time.
         # 1 = original (gentlest on a Pi 3B+), 5 = default/5x.
         VITE_FLIP_SPEED: ${FLIP_SPEED:-5}
+        # Flip animation on/off. false → instant, no flip/stagger/sound.
+        VITE_FLIP_ANIMATE: ${FLIP_ANIMATE:-true}
     # Prefer the freshly built image over pulling from GHCR.
     pull_policy: build

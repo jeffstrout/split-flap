@@ -9,6 +9,13 @@
 const parsed = Number(import.meta.env.VITE_FLIP_SPEED);
 const SPEED = Number.isFinite(parsed) && parsed > 0 ? parsed : 5;
 
+// Master on/off for the flip animation (VITE_FLIP_ANIMATE). When off, each cell
+// snaps straight to its target glyph — no flip, no per-row/char stagger, no
+// sound — so a whole screen changes at once and instantly. Default on; the
+// published image bakes it off (this wall favors speed over the mechanical look).
+const rawAnimate = import.meta.env.VITE_FLIP_ANIMATE;
+export const ANIMATE = !(rawAnimate === 'false' || rawAnimate === '0');
+
 // Base (1x) durations — the original mechanical timing.
 const BASE_FLIP_FULL_MS = 80; // one full card flip
 const BASE_FLIP_GAP_MS = 30; // pause between consecutive flips

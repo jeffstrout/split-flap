@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FLIP_HALF_MS, FLIP_FULL_MS, FLIP_GAP_MS } from './flipTiming';
+import { FLIP_HALF_MS, FLIP_FULL_MS, FLIP_GAP_MS, ANIMATE } from './flipTiming';
 
 // Characters available on the flip board (space + letters + numbers + punctuation)
 const CHARACTERS = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.,!?-:\'"/()@#$%&*+';
@@ -43,6 +43,14 @@ function FlipChar({ char, delay = 0, onFlip }) {
     targetRef.current = newTarget;
     const gen = ++genRef.current;   // supersede any in-flight animation
     clearTimers();
+
+    // Animation disabled → snap straight to the glyph, ignoring the stagger delay,
+    // so the whole board changes at once with no flip and no sound.
+    if (!ANIMATE) {
+      setShown(newTarget);
+      setIsFlipping(false);
+      return;
+    }
 
     const start = setTimeout(() => flipToTarget(gen), delay);
     timersRef.current.push(start);
