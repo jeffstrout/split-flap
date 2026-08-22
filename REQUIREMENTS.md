@@ -203,7 +203,10 @@ the wheel (forward or backward) to minimize steps — producing the split-flap
 effect. An optional tick sound plays per flip when sound is enabled. Flip timing
 is centralized in `client/src/components/flipTiming.js` (single source for JS
 steps + the CSS `--flip-duration`); speed is set at build time by
-`VITE_FLIP_SPEED` (default 3x).
+`VITE_FLIP_SPEED` (default 5x). The animation can be disabled entirely at build
+time with `VITE_FLIP_ANIMATE=false` — tiles then snap straight to their target
+glyph (no flip, stagger, or sound) for instant updates; the published image ships
+this way.
 
 ### FR-18 Kiosk display
 The client must render correctly full-screen for unattended kiosk use
