@@ -170,13 +170,20 @@ updates.
 
 ### Tuning
 
+> The **published image ships with the flip animation disabled**
+> (`FLIP_ANIMATE=false`) — letters snap instantly, so none of the animation
+> performance notes below apply unless you re-enable it (`FLIP_ANIMATE=true`) in a
+> local build.
+
 - **Pi 4B / 5**: no tuning needed — they run the full-board animation
   GPU-accelerated at the default speed. (Make sure the kiosk keeps GPU on; see
   step 5c.)
 - **Word-clock modes** (`qlock`) have no flip animation and run smoothly on any Pi.
-- **Pi 3B+ only**: if **split-flap** full-board changes feel janky, slow the
-  animation to `FLIP_SPEED=1`. This is baked in at build time, so it requires a
-  local build (see the note above); the published image is fixed at `3`.
+- **Pi 3B+ only**: if you re-enable animation and **split-flap** full-board changes
+  feel janky, slow it with `FLIP_SPEED=1` — or just leave animation off (the
+  published default). Speed/animation are baked in at build time, so changing them
+  requires a local build (see the note above); the published image bakes `5` /
+  animation off.
 
 ---
 

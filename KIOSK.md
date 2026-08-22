@@ -61,7 +61,9 @@ cage -- chromium --kiosk --ozone-platform=wayland \
 > correct there. On a **4B/5** a black screen is unusual — check `~/cage.log`, and
 > if the GPU path is at fault, fall back to `--disable-gpu` as a workaround.
 
-Performance notes by model (rendering is the bottleneck, not the server):
+Performance notes by model (rendering is the bottleneck, not the server). Note the
+published image ships with the flip animation **off** (`FLIP_ANIMATE=false`, instant
+updates), so these only matter if you re-enable it in a local build:
 
 - **Word-clock modes** (`qlock`) have no flip animation and run smoothly on any Pi.
 - **Pi 4B / 5** run the full-board split-flap animation GPU-accelerated at the
@@ -70,7 +72,8 @@ Performance notes by model (rendering is the bottleneck, not the server):
   at once and can stutter on its single Cortex-A53; the idle info-screen ticks are
   light. `FlipChar` is wrapped in `React.memo` to cut re-renders. If the animation
   feels too busy, **slow the flip down** by building with `FLIP_SPEED=1`
-  (1 = original speed, 3 = default/3x) via `docker-compose.build.yml`.
+  (1 = original speed, 5 = default/5x) via `docker-compose.build.yml` — or just
+  leave animation off (the published default).
 - Run **64-bit Raspberry Pi OS** for the `arm64` image on any model.
 
 ## Prevent the OS from sleeping / screensaver

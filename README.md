@@ -98,7 +98,8 @@ defaults below apply.
 | `PERSIST_FILE` | `/data/.state.json` | State file on the volume; `off` to disable |
 | `IMAGE_TAG` | `latest` | GHCR image tag to run; pin to `sha-<short>` to freeze/rollback |
 | `WATCHTOWER_POLL_INTERVAL` | `1200` | Seconds between auto-update checks (~20 min) |
-| `FLIP_SPEED` | `3` | Flip-animation speed. Baked in at **build** time, so it only applies to local builds ([docker-compose.build.yml](docker-compose.build.yml)); the published image is fixed at `3` |
+| `FLIP_SPEED` | `5` | Flip-animation speed multiplier (higher = faster). Baked in at **build** time, so it only applies to local builds ([docker-compose.build.yml](docker-compose.build.yml)); the published image bakes `5` |
+| `FLIP_ANIMATE` | `true` | Whether letters animate (flip). Set `false` for **instant** updates — no flip, no per-row/char stagger, no sound; the whole screen changes at once. Build-time only; the **published image bakes `false`** |
 
 Changing the mode/theme/sound from the **setup screen** (`http://<pi-ip>/setup`)
 applies to all displays instantly and persists across restarts.
@@ -137,6 +138,11 @@ adding a second mapping (`- "8080:3001"`) before dropping it later.
 Any recent Pi runs the server easily — the only heavy part is Chromium rendering
 the flip animation, and that scales with the model.
 
+> **Note:** the published image ships with the flip animation **disabled**
+> (`FLIP_ANIMATE=false`) — letters snap instantly, which is trivial to render on
+> any Pi, so the notes below only matter if you re-enable it (`FLIP_ANIMATE=true`)
+> in a local build.
+
 - **Pi 4B / 5** — the recommended choice. They drive the full-board split-flap
   animation **GPU-accelerated** (VideoCore VI does Chromium's GL ES under Wayland)
   at the default speed, with cores to spare. No tuning needed; just keep the
@@ -147,20 +153,21 @@ the flip animation, and that scales with the model.
   to ~192 tiles at once and stress its single Cortex-A53; expect some jank on big
   changes (idle info-screen ticks are fine). Its VideoCore IV can't drive GL ES
   under Wayland, so the kiosk renders in **software** (`--disable-gpu`) — fine for
-  this mostly-CSS board. If big changes feel busy, build with `FLIP_SPEED=1` (the
-  gentler original speed) via the build override below; the published image ships
-  at `2`.
+  this mostly-CSS board. If you re-enable animation and big changes feel busy,
+  build with a gentler `FLIP_SPEED=1` via the build override below — or just leave
+  animation off (the published default), which sidesteps the issue entirely.
 - The client wraps each tile in `React.memo` to minimize re-renders on all models.
 
 ### Building the image yourself
 
 Normally the Pi just pulls the prebuilt GHCR image. To build from source
-instead (e.g. to test an unpushed change or bake a custom `FLIP_SPEED`), layer
-the build override — **on your Mac/CI, not a 3B+** (the Vite build is
-memory-hungry):
+instead (e.g. to test an unpushed change, bake a custom `FLIP_SPEED`, or turn the
+animation back on with `FLIP_ANIMATE=true`), layer the build override — **on your
+Mac/CI, not a 3B+** (the Vite build is memory-hungry):
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build split-flap
+FLIP_ANIMATE=true FLIP_SPEED=5 \
+  docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build split-flap
 ```
 
 If you must build on a 1 GB Pi 3B+, add swap first:

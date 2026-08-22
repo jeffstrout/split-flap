@@ -136,8 +136,8 @@ docker compose pull && docker compose up -d   # pull image + run + Watchtower
 - **Local builds** (devs, custom `FLIP_SPEED`): layer `docker-compose.build.yml`
   to build from source instead of pulling —
   `docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build split-flap`.
-  CI bakes `FLIP_SPEED=3` into the published image, so a custom speed requires a
-  local build.
+  CI bakes `FLIP_SPEED=5` and `FLIP_ANIMATE=false` into the published image, so
+  changing the speed or turning the flip animation back on requires a local build.
 
 ### DigitalOcean App Platform
 
@@ -174,7 +174,8 @@ doctl apps logs <app-id> api --type run
 | `MQTT_BASE_TOPIC` | Server | Topic root and HA device identifier (default `split_flap`). Changing it orphans existing HA entities |
 | `MQTT_DISCOVERY_PREFIX` | Server | HA discovery prefix (default `homeassistant`) |
 | `APP_COMMIT` / `APP_BUILD_TIME` | Server (set by image) | Build provenance baked in by CI; surfaced via `GET /api/version` and `/api/health`. `APP_VERSION` optionally carries a release tag |
-| `FLIP_SPEED` | Compose (build arg, local build only) | Flip-animation speed baked into the client: `1` = original, `3` = default/3x. Passed as `VITE_FLIP_SPEED` to the Vite build via `docker-compose.build.yml`; the published GHCR image is fixed at `3` |
+| `FLIP_SPEED` | Compose (build arg, local build only) | Flip-animation speed baked into the client: `1` = original, `5` = default/5x. Passed as `VITE_FLIP_SPEED` to the Vite build via `docker-compose.build.yml`; the published GHCR image bakes `5` |
+| `FLIP_ANIMATE` | Compose (build arg, local build only) | Whether letters animate. `false` → instant updates (no flip/stagger/sound). Passed as `VITE_FLIP_ANIMATE`; the published GHCR image bakes `false` |
 
 ### WebSocket in Production
 
@@ -389,7 +390,7 @@ chrome.exe --kiosk http://localhost:3000
 - `client/src/components/FlipBoard.jsx` - Board container + audio synthesis
 - `client/src/components/FlipRow.jsx` - Row of characters, maps text to FlipChar
 - `client/src/components/FlipChar.jsx` - Individual character flip animation
-- `client/src/components/flipTiming.js` - Flip animation timing (single source; speed via `VITE_FLIP_SPEED`, default 3x). Tiles flip the shortest direction through the character wheel (`FlipChar.jsx`)
+- `client/src/components/flipTiming.js` - Flip animation timing (single source; speed via `VITE_FLIP_SPEED`, default 5x; `VITE_FLIP_ANIMATE=false` disables the animation for instant updates). Tiles flip the shortest direction through the character wheel (`FlipChar.jsx`)
 - `client/src/hooks/useWebSocket.js` - Auto-reconnecting WebSocket hook. Takes
   `(url, onMessage)` and hands **every** frame to `onMessage` as it arrives.
   It deliberately does not expose a `lastMessage` state slot: the connect-time
