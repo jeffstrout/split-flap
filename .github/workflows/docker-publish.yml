@@ -61,5 +61,6 @@ jobs:
             GIT_SHA=${{ github.sha }}
             BUILD_TIME=${{ steps.vars.outputs.build_time }}
             VITE_FLIP_SPEED=5
+            VITE_FLIP_ANIMATE=false
           cache-from: type=gha
           cache-to: type=gha,mode=max
