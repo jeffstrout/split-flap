@@ -4,6 +4,7 @@ import QlockTwo from './components/QlockTwo';
 import Controls from './components/Controls';
 import useWebSocket from './hooks/useWebSocket';
 import useWakeLock from './hooks/useWakeLock';
+import useAutoReload from './hooks/useAutoReload';
 import { ROWS, COLS } from '@board';
 
 // The live wall display (route "/"). Renders the active mode from the
@@ -18,6 +19,10 @@ function Display() {
 
   // Keep the wall monitor awake (FR-37).
   useWakeLock();
+
+  // Reload the kiosk when a new build is deployed (issue #94) — Watchtower
+  // updates the image but the browser keeps the old bundle until a reload.
+  useAutoReload();
 
   const wsUrl = import.meta.env.DEV
     ? 'ws://localhost:3001'
