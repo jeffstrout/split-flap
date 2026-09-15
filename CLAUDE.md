@@ -119,6 +119,8 @@ docker compose pull && docker compose up -d   # pull image + run + Watchtower
 - **Build host**: build on a capable machine (Mac/CI), not on a Pi 3B+ (the Vite
   build is memory-hungry). The image is multi-arch (`arm64` + `amd64`).
 
+Host Wi-Fi hardening (persistent journal + gateway watchdog): `deploy/host/` — see `deploy/host/README.md` and `PI-SETUP.md`.
+
 #### Auto-update (CI → GHCR → Pi)
 
 - **CI publishes on every push to `main`** (`.github/workflows/docker-publish.yml`):

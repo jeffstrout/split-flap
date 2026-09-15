@@ -195,6 +195,13 @@ docker compose down -v                       # stop AND wipe persisted state
 The persisted state lives in the `split-flap-data` volume and survives
 `down`/`up` and image updates — only `down -v` clears it.
 
+
+### Host hardening (Wi-Fi-only Pis)
+
+If the board stays up on HDMI but the Pi stops answering on the LAN, see
+[deploy/host/README.md](deploy/host/README.md) (persistent `journald` + gateway
+watchdog). Prefer Ethernet for unattended displays.
+
 ---
 
 ## API
