@@ -335,6 +335,33 @@ volume and survive reboots and updates — only `down -v` clears them.
 > Tip: `curl -s http://localhost/api/version` reports the *served* build; if
 > the display looks unchanged after it advances, the kiosk just needs a reload.
 
+
+### Host hardening (Wi-Fi reliability)
+
+Wall-display Pis that run **Wi-Fi only** can wedge the `brcmfmac` stack so
+ping/SSH fail (ARP shows "Host is down") while Docker and the HDMI kiosk keep
+working. Prefer **Ethernet** when you can. Until then, install persistent
+journals + a gateway reboot watchdog from this repo:
+
+```bash
+cd ~/split-flap
+sudo ./deploy/host/install-host-hardening.sh
+```
+
+Details and verify commands: [deploy/host/README.md](deploy/host/README.md).
+
+Quick checks:
+
+```bash
+systemctl status gateway-watchdog.timer
+cat /var/lib/gateway-watchdog/fail_count          # 0 when the gateway answers
+journalctl --list-boots                          # previous boots after a reboot
+sudo tail /var/log/gateway-watchdog.log          # failures / recovery / reboot
+```
+
+The watchdog pings the default gateway every minute and reboots only after
+**five** consecutive failures (~five minutes), so brief blips do not loop-reboot.
+
 ---
 
 ## Troubleshooting
@@ -347,6 +374,7 @@ volume and survive reboots and updates — only `down -v` clears them.
 | Watchtower logs `client version 1.25 is too old. Minimum supported API version is 1.40` | Docker API mismatch — ensure `DOCKER_API_VERSION` is set on the `watchtower` service (it is in the current `docker-compose.yml`); `git pull` then `docker compose up -d` to recreate it |
 | `docker: permission denied` | You skipped the reboot in step 1 (`usermod -aG docker`) |
 | Page unreachable from another device | Use the Pi's IP; check `docker compose ps` shows it `Up` |
+| Display works (kiosk up) but ping/SSH fail; ARP "Host is down" | Wi-Fi stack likely wedged — reboot; then install [host hardening](deploy/host/README.md). Prefer Ethernet |
 | Animation stutters on full-board changes (3B+) | Build locally with `FLIP_SPEED=1` (see step 4 note). A 4B/5 shouldn't need this |
 | Console shows a **login prompt**, not the board | The kiosk session didn't launch — check `cat ~/cage.log` and that step 5b/5c ran; restart with `sudo systemctl restart getty@tty1` |
 | Screen is **black** (cursor or blank) with `connectedClients: 1` | Chromium's GPU process is crashing. **3B+**: make sure `--disable-gpu --disable-gpu-compositing` are in the `~/.bash_profile` launch line. **4B/5**: unusual — check `~/cage.log` for `eglCreateContext`/GL errors and, if the GPU path is at fault, add `--disable-gpu` as a fallback |
