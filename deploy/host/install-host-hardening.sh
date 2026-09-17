@@ -25,4 +25,4 @@ echo "→ Verify"
 systemctl is-enabled gateway-watchdog.timer
 systemctl status gateway-watchdog.timer --no-pager | head -12 || true
 journalctl --list-boots | head -3 || true
-echo "Done. Prefer Ethernet over Wi-Fi for wall displays when possible."
+echo "Done. Live wall display is Ethernet (splitflap.strout.us / 192.168.0.17)."

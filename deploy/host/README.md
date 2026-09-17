@@ -1,8 +1,12 @@
 # Host hardening (Raspberry Pi)
 
-Wi-Fi-only Pis (especially with `brcmfmac`) can stop answering ping/SSH while
-Docker and the HDMI kiosk keep running. These units make the next failure
-debuggable and self-recovering.
+The live split-flap wall display is on **Ethernet** at `splitflap.strout.us`
+(`192.168.0.17`) after the 2026-09-16 Wi-Fi cleanup. Dual-Wi-Fi is not the
+current path.
+
+These units remain as a leftover safety net if a display Pi is still on Wi-Fi
+(`brcmfmac` can stop answering ping/SSH while Docker and the HDMI kiosk keep
+running). They are not how this appliance is networked today.
 
 | Piece | What it does |
 | --- | --- |
@@ -26,10 +30,8 @@ journalctl --list-boots                    # previous boots appear after a reboo
 sudo tail -f /var/log/gateway-watchdog.log # only written on failures / recovery
 ```
 
-## Prefer Ethernet
+## Ethernet is the live path
 
-A cable to `eth0` is more reliable than Wi-Fi for an unattended wall display.
-The watchdog is a safety net, not a substitute for wired networking.
-
-Powersave should stay off (NetworkManager `wifi.powersave = 2`); the install
-script does not change Wi-Fi config — see the live appliance or PI-SETUP.
+A cable to `eth0` is how this wall display is on the LAN. The watchdog is a
+safety net, not a substitute for wired networking. Wi-Fi powersave / dual-SSID
+notes are obsolete for the live appliance; do not treat them as current config.

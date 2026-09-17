@@ -11,12 +11,13 @@
 //   split_flap/<domain>/<name>        -> state
 //
 // WHY A WALL DISPLAY PUBLISHES STATE
-// It is the flakiest reporter in the fleet — WiFi-only at about -64 dBm through
-// walls — and it is the one host whose death nobody notices, because you find
-// out by walking past it. The LWT makes the broker announce `offline` on its
-// behalf, so absence becomes the signal. Syslog cannot do that (push-only:
-// quiet and dead look identical) and neither can ping (ICMP is answered by the
-// kernel, so a box with wedged userspace still replies).
+// It is the one host whose death nobody notices, because you find out by
+// walking past it. After the 2026-09-16 Wi-Fi cleanup it is Ethernet at
+// splitflap.strout.us (192.168.0.17), not dual-Wi-Fi. The LWT still makes the
+// broker announce `offline` on its behalf when the connection drops, so
+// absence becomes the signal. Syslog cannot do that (push-only: quiet and
+// dead look identical) and neither can ping (ICMP is answered by the kernel,
+// so a box with wedged userspace still replies).
 //
 // SCOPE: the appliance's own state, never its content. Pushing content TO the
 // board is already POST /api/screens/<n>; republishing board text here would

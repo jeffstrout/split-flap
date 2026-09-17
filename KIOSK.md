@@ -3,17 +3,20 @@
 How to run the display full-screen on a wall-mounted monitor (FR-35–FR-37).
 
 > **Port:** the single Docker container serves on **80** by default, so
-> `http://<host>` needs no port. Local non-Docker dev serves on **3000**.
-> Adjust the URLs below to match how you're running it.
+> `http://splitflap.strout.us` (`192.168.0.17`) needs no port. Local non-Docker
+> dev serves on **3000**. Adjust the URLs below to match how you're running it.
+>
+> **LAN (after 2026-09-16 Wi-Fi cleanup):** Ethernet at that DNS/IP. Dual-Wi-Fi
+> is not current.
 
 ## Launch full-screen
 
 ```bash
 # macOS
-open -a "Google Chrome" --args --kiosk --app=http://<host>
+open -a "Google Chrome" --args --kiosk --app=http://splitflap.strout.us
 
 # Linux (Chromium)
-chromium-browser --kiosk --app=http://<host> \
+chromium-browser --kiosk --app=http://splitflap.strout.us \
   --noerrdialogs --disable-infobars --incognito
 ```
 
@@ -100,8 +103,8 @@ Add the kiosk launch command to the OS autostart (macOS Login Items /
 Mode is API-controlled (all displays switch together):
 
 ```bash
-curl -X POST http://<host>/api/mode/qlock   # word clock
-curl -X POST http://<host>/api/mode/flip    # split-flap board
+curl -X POST http://splitflap.strout.us/api/mode/qlock   # word clock
+curl -X POST http://splitflap.strout.us/api/mode/flip    # split-flap board
 ```
 
 ## Burn-in mitigation (OLED/plasma only)
