@@ -36,11 +36,9 @@ were removed (#80); a mode is now just `mode`.
   push (each push resets the timer) and drops out of the rotation. The bottom
   date/time line stays pinned. Pushes/expiries take effect at the next rotation
   tick. Screen content is transient and **not persisted** across restarts.
-- **Display**: `/` — the live wall display (kiosk). On this LAN:
-  **`http://splitflap.strout.us`** (`192.168.0.17`), Ethernet after the
-  2026-09-16 Wi-Fi cleanup (dual-Wi-Fi is not current).
-- **Setup**: `/setup` (LAN: `http://splitflap.strout.us/setup`; local
-  dev: `http://localhost:3000/setup`) — pick the mode,
+- **Display**: `/` — the live wall display (kiosk). This appliance's LAN
+  identity: [README.md](README.md#this-appliance-lan).
+- **Setup**: `/setup` (e.g. `http://localhost:3000/setup`) — pick the mode,
   theme, and flip sound, and see a live, **view-only preview of all 6 screen
   slots** (with per-slot expiry countdown and Clear). Changes apply to all
   displays instantly via WebSocket and are persisted across restarts (see
@@ -107,7 +105,7 @@ auto-updates (issue #50).
 ```bash
 cp .env.example .env                  # optional — defaults work as-is
 docker compose pull && docker compose up -d   # pull image + run + Watchtower
-# open http://splitflap.strout.us  (192.168.0.17) and /setup to configure
+# open http://<host>  (and /setup to configure)
 ```
 
 - **Single port**: the WebSocket shares the HTTP server (`new WebSocketServer({ server })`)
@@ -123,9 +121,8 @@ docker compose pull && docker compose up -d   # pull image + run + Watchtower
   build is memory-hungry). The image is multi-arch (`arm64` + `amd64`).
 
 Host hardening (persistent journal + gateway watchdog): leftover safety net
-in `deploy/host/` — see `deploy/host/README.md` and `PI-SETUP.md`. The live
-display is Ethernet at `splitflap.strout.us` (`192.168.0.17`); dual-Wi-Fi is
-not current.
+in `deploy/host/` — see `deploy/host/README.md` and `PI-SETUP.md`. Live path
+for this appliance is Ethernet ([README.md](README.md#this-appliance-lan)).
 
 #### Auto-update (CI → GHCR → Pi)
 
@@ -221,13 +218,12 @@ data expires 15 minutes after its last push.
 
 `lines` is an array of ≤ 7 strings (the bottom row is reserved for the
 date/time line); each is uppercased and padded/truncated to 24 chars with the
-same rules as `/api/message`. Example push from another machine (this LAN: `splitflap.strout.us` /
-`192.168.0.17`):
+same rules as `/api/message`. Example push from another machine:
 
 ```bash
-curl -X POST http://splitflap.strout.us/api/screens/3 \
- -H 'Content-Type: application/json' \
- -d '{"lines":["SERVER A","CPU 42%","MEM 71%"],"align":"center"}'
+curl -X POST http://<host>/api/screens/3 \
+  -H 'Content-Type: application/json' \
+  -d '{"lines":["SERVER A","CPU 42%","MEM 71%"],"align":"center"}'
 ```
 
 ### Clock

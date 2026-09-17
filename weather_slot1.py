@@ -6,12 +6,13 @@ wttr.in, formats it for the board, and pushes it to slot 1 on a loop. The
 refresh interval also keeps the slot from hitting its 15-minute expiry.
 """
 import json
+import os
 import time
 import urllib.request
 from datetime import datetime
 
 # --- Config (edit these) ----------------------------------------------------
-HOST = "http://splitflap.strout.us"  # 192.168.0.17 — live wall display
+HOST = os.environ.get("SPLITFLAP_HOST", "http://splitflap.strout.us")  # 192.168.0.17
 SLOT = 1                            # which screen slot (1-6)
 LOCATION = ""                       # e.g. "Seguin" or "78155"; "" = auto by IP
 REFRESH_SECONDS = 300               # 5 min: refreshes weather + beats the 15-min expiry

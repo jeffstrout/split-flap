@@ -59,9 +59,8 @@ uname -m      # aarch64 = 64-bit (good).  armv7l = 32-bit (re-flash recommended)
 
 If `armv7l`, re-flash with **Raspberry Pi Imager → "Raspberry Pi OS (64-bit)"**.
 In Imager's settings (gear icon), pre-set the hostname (e.g. `splitflap`), enable
-SSH, and add Wi-Fi only if you need a **headless first boot**. The live wall
-display is Ethernet at `splitflap.strout.us` (`192.168.0.17`) after the
-2026-09-16 Wi-Fi cleanup — dual-Wi-Fi is not current. Then update:
+SSH, and add Wi-Fi only if you need a **headless first boot** (this appliance
+is Ethernet — see [README.md](README.md#this-appliance-lan)). Then update:
 
 ```bash
 sudo apt update && sudo apt full-upgrade -y
@@ -160,10 +159,10 @@ curl http://localhost/api/health
 curl http://localhost/api/version          # which build is running
 ```
 
-From any device on the network, open **`http://splitflap.strout.us`**
-(`192.168.0.17`) — the live LAN identity after the 2026-09-16 Wi-Fi cleanup
-(Ethernet; dual-Wi-Fi is not current). `http://splitflap.local` still works
-via mDNS if the hostname is `splitflap` (check with `hostnamectl`). Configure
+From any device on the network, open **`http://splitflap.local`** (or
+`http://<pi-ip>`) — the `.local` name is the Pi's own hostname, so it only works
+if you named the host `splitflap`; check with `hostnamectl`. This appliance's
+live DNS is in [README.md](README.md#this-appliance-lan). Configure
 mode/theme/sound at **`/setup`** (the running build shows at the bottom). Your
 choice persists across reboots and updates.
 
@@ -341,14 +340,11 @@ volume and survive reboots and updates — only `down -v` clears them.
 
 ### Host hardening (leftover safety net)
 
-The live wall display is on **Ethernet** at `splitflap.strout.us`
-(`192.168.0.17`) after the 2026-09-16 Wi-Fi cleanup. Dual-Wi-Fi is not the
-current path.
-
+This appliance is on Ethernet ([README.md](README.md#this-appliance-lan)).
 A leftover Wi-Fi-only Pi can still wedge the `brcmfmac` stack so ping/SSH fail
-(ARP shows "Host is down") while Docker and the HDMI kiosk keep working. The
-journal + gateway reboot watchdog below is a safety net for that case, not how
-this appliance is networked today:
+(ARP shows "Host is down") while Docker and the HDMI kiosk keep working. Prefer
+**Ethernet** when you can. The journal + gateway reboot watchdog is a safety
+net for that leftover case:
 
 ```bash
 cd ~/split-flap
@@ -380,8 +376,8 @@ The watchdog pings the default gateway every minute and reboots only after
 | `/api/version` shows the new build but the display's animation/UI looks unchanged | The kiosk is still showing the pre-update page — client code only reloads when the page does. `sudo systemctl restart getty@tty1` (or `sudo reboot`) |
 | Watchtower logs `client version 1.25 is too old. Minimum supported API version is 1.40` | Docker API mismatch — ensure `DOCKER_API_VERSION` is set on the `watchtower` service (it is in the current `docker-compose.yml`); `git pull` then `docker compose up -d` to recreate it |
 | `docker: permission denied` | You skipped the reboot in step 1 (`usermod -aG docker`) |
-| Page unreachable from another device | Use `http://splitflap.strout.us` (`192.168.0.17`); check `docker compose ps` shows it `Up` |
-| Display works (kiosk up) but ping/SSH fail; ARP "Host is down" | Leftover Wi-Fi stack likely wedged — reboot; then install [host hardening](deploy/host/README.md). Live path is Ethernet |
+| Page unreachable from another device | Use the Pi's IP (or [this appliance's DNS](README.md#this-appliance-lan)); check `docker compose ps` shows it `Up` |
+| Display works (kiosk up) but ping/SSH fail; ARP "Host is down" | Leftover Wi-Fi stack likely wedged — reboot; then install [host hardening](deploy/host/README.md). Prefer Ethernet |
 | Animation stutters on full-board changes (3B+) | Build locally with `FLIP_SPEED=1` (see step 4 note). A 4B/5 shouldn't need this |
 | Console shows a **login prompt**, not the board | The kiosk session didn't launch — check `cat ~/cage.log` and that step 5b/5c ran; restart with `sudo systemctl restart getty@tty1` |
 | Screen is **black** (cursor or blank) with `connectedClients: 1` | Chromium's GPU process is crashing. **3B+**: make sure `--disable-gpu --disable-gpu-compositing` are in the `~/.bash_profile` launch line. **4B/5**: unusual — check `~/cage.log` for `eglCreateContext`/GL errors and, if the GPU path is at fault, add `--disable-gpu` as a fallback |

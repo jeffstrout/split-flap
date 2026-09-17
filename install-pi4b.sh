@@ -155,8 +155,9 @@ fi
 EOF
 fi
 
-log "All set. Configure at:  http://splitflap.strout.us/setup  (192.168.0.17)"
-log "mDNS fallback:          http://$(hostname).local/setup"
+SETUP_URL="http://$(hostname).local"
+[ "$HOST_PORT" != "80" ] && SETUP_URL="http://$(hostname).local:$HOST_PORT"
+log "All set. Configure at:  $SETUP_URL/setup"
 log "Rebooting into the kiosk in 5 seconds…  (Ctrl-C to cancel)"
 sleep 5
 sudo reboot

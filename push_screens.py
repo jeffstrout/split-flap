@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Push live system and weather info to all 6 split-flap screens."""
 import json
+import os
 import subprocess
 import urllib.request
 
-HOST = "http://splitflap.strout.us"  # 192.168.0.17 — live wall display
+HOST = os.environ.get("SPLITFLAP_HOST", "http://splitflap.strout.us")  # 192.168.0.17
 COLS = 24
 SEP = "-" * COLS
 

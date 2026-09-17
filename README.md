@@ -36,6 +36,17 @@ Settings (mode, theme, sound, language) and the last message are pushed to every
 connected client over WebSocket and persisted to a Docker volume, so the display
 returns in the mode it was last set to after a reboot.
 
+### This appliance (LAN)
+
+| Field | Value |
+| --- | --- |
+| DNS | `splitflap.strout.us` |
+| IP | `192.168.0.17` |
+| Path | Ethernet (dual-Wi-Fi is not current; 2026-09-16 cleanup) |
+
+Reusable commands below use `<pi-ip>` / `<host>` / `http://<hostname>.local`.
+On this LAN those are the row above.
+
 ---
 
 ## Quick start (Raspberry Pi)
@@ -50,12 +61,10 @@ cp .env.example .env                 # optional — defaults work as-is
 docker compose pull && docker compose up -d
 ```
 
-Then open **`http://splitflap.strout.us`** (`192.168.0.17`) from any browser
-on the LAN. That is this wall display after the 2026-09-16 Wi-Fi cleanup
-(Ethernet; dual-Wi-Fi is not current). For a *new* Pi that is not this host,
-use its IP or `http://<hostname>.local`. The Pi itself can be the display:
-plug it into a monitor over HDMI and launch Chromium in kiosk mode (see
-[KIOSK.md](KIOSK.md)).
+Then open **`http://<pi-ip>`** from any browser on your network (this
+appliance: [This appliance (LAN)](#this-appliance-lan)). The Pi itself can
+be the display: plug it into a monitor over HDMI and launch Chromium in
+kiosk mode (see [KIOSK.md](KIOSK.md)).
 
 > **Setting up a Pi from a fresh OS install?** Follow the step-by-step
 > [PI-SETUP.md](PI-SETUP.md) runbook (Docker install, swap, and Chromium
@@ -104,9 +113,8 @@ defaults below apply.
 | `FLIP_SPEED` | `5` | Flip-animation speed multiplier (higher = faster). Baked in at **build** time, so it only applies to local builds ([docker-compose.build.yml](docker-compose.build.yml)); the published image bakes `5` |
 | `FLIP_ANIMATE` | `true` | Whether letters animate (flip). Set `false` for **instant** updates — no flip, no per-row/char stagger, no sound; the whole screen changes at once. Build-time only; the **published image bakes `false`** |
 
-Changing the mode/theme/sound from the **setup screen**
-(`http://splitflap.strout.us/setup`) applies to all displays instantly and
-persists across restarts.
+Changing the mode/theme/sound from the **setup screen** (`http://<pi-ip>/setup`)
+applies to all displays instantly and persists across restarts.
 
 ### Port 80 needs no extra privilege
 
@@ -191,7 +199,7 @@ Run the **64-bit** Raspberry Pi OS so the standard `arm64` Node image is used.
 ```bash
 docker compose logs -f                       # follow logs (app + watchtower)
 docker compose pull && docker compose up -d  # update now (don't wait for the poll)
-curl http://splitflap.strout.us/api/version  # which build is running (192.168.0.17)
+curl http://<pi-ip>/api/version              # which build is running
 docker compose down                          # stop (keeps the data volume)
 docker compose down -v                       # stop AND wipe persisted state
 ```
@@ -202,30 +210,25 @@ The persisted state lives in the `split-flap-data` volume and survives
 
 ### Host hardening
 
-The live wall display is on **Ethernet** at `splitflap.strout.us`
-(`192.168.0.17`) after the 2026-09-16 Wi-Fi cleanup. Dual-Wi-Fi is not the
-current path.
-
-If a display Pi is still on Wi-Fi and the board stays up on HDMI but the host
-stops answering on the LAN, see [deploy/host/README.md](deploy/host/README.md)
-(persistent `journald` + gateway watchdog). That hardening is a leftover
-safety net, not how this appliance is networked today.
+If the board stays up on HDMI but the Pi stops answering on the LAN, see
+[deploy/host/README.md](deploy/host/README.md) (persistent `journald` + gateway
+watchdog). Prefer Ethernet for unattended displays. This appliance's live path
+is Ethernet — [This appliance (LAN)](#this-appliance-lan).
 
 ---
 
 ## API
 
-Full endpoint reference is in [CLAUDE.md](CLAUDE.md#api-endpoints). On this
-LAN the host is **`splitflap.strout.us`** (`192.168.0.17`); add `:<port>` only
-if you overrode `HOST_PORT`:
+Full endpoint reference is in [CLAUDE.md](CLAUDE.md#api-endpoints). Common ones
+(replace the host; add `:<port>` only if you overrode `HOST_PORT`):
 
 ```bash
-curl -X POST http://splitflap.strout.us/api/mode/qlock        # word clock
-curl -X POST http://splitflap.strout.us/api/mode/flip         # split-flap board
-curl -X POST http://splitflap.strout.us/api/message \
+curl -X POST http://<pi-ip>/api/mode/qlock        # word clock
+curl -X POST http://<pi-ip>/api/mode/flip         # split-flap board
+curl -X POST http://<pi-ip>/api/message \
   -H 'Content-Type: application/json' \
   -d '{"lines":["HELLO WORLD"],"align":"center"}'
-curl http://splitflap.strout.us/api/health                    # liveness probe
+curl http://<pi-ip>/api/health                    # liveness probe
 ```
 
 ### Rotating info screens
@@ -238,12 +241,12 @@ screen (`/setup`) shows a live, view-only preview of all 6 slots.
 
 ```bash
 # Push to slot 3 (up to 7 lines; uppercased, padded to 24 chars)
-curl -X POST http://splitflap.strout.us/api/screens/3 \
+curl -X POST http://<pi-ip>/api/screens/3 \
   -H 'Content-Type: application/json' \
   -d '{"lines":["SERVER A","CPU 42%","MEM 71%"],"align":"center"}'
 
-curl http://splitflap.strout.us/api/screens                   # inspect all slots + TTLs
-curl -X DELETE http://splitflap.strout.us/api/screens/3       # clear one slot
+curl http://<pi-ip>/api/screens                   # inspect all slots + TTLs
+curl -X DELETE http://<pi-ip>/api/screens/3       # clear one slot
 ```
 
 ---
