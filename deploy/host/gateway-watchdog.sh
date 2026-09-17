@@ -1,7 +1,9 @@
 #!/bin/bash
 # Reboot if default gateway is unreachable for FAIL_LIMIT consecutive checks.
-# Intended for Wi-Fi-only display Pis where brcmfmac can wedge inbound
-# connectivity while the kiosk container keeps running.
+# Leftover safety net for display Pis. The live split-flap wall display is
+# Ethernet at 192.168.0.17 / splitflap.strout.us (2026-09-16 Wi-Fi cleanup);
+# this was originally for Wi-Fi-only boxes where brcmfmac could wedge inbound
+# connectivity while the kiosk container kept running.
 set -euo pipefail
 
 FAIL_LIMIT="${FAIL_LIMIT:-5}"

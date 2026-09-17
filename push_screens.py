@@ -4,7 +4,7 @@ import json
 import subprocess
 import urllib.request
 
-HOST = "http://192.168.0.17"
+HOST = "http://splitflap.strout.us"  # 192.168.0.17 — live wall display
 COLS = 24
 SEP = "-" * COLS
 
